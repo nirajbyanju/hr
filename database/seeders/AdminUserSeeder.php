@@ -21,7 +21,7 @@ class AdminUserSeeder extends Seeder
         $roles = $this->seedDefaultRolesAndPermissions();
 
         $adminRole = $roles['admin'];
-        $email = env('DEFAULT_ADMIN_EMAIL', 'admin@zerihr.local');
+        $email = env('DEFAULT_ADMIN_EMAIL', 'admin@samriddhihr.local');
         $password = env('DEFAULT_ADMIN_PASSWORD', 'password');
 
         $admin = User::query()->updateOrCreate(

@@ -1,4 +1,4 @@
-@extends('layouts.auth', ['title' => 'ZerithonLabs | Reset Password', 'heading' => 'Reset Password', 'subtitle' => 'Enter your email address and we will help you reset access.'])
+@extends('layouts.auth', ['title' => 'SamriddhiHR | Reset Password', 'heading' => 'Reset Password', 'subtitle' => 'Enter your email address and we will help you reset access.'])
 
 @section('content')
     <form method="POST" action="{{ route('password.email') }}">

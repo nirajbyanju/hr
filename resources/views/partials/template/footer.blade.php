@@ -1,3 +1,3 @@
 <div class="footer">
-    © {{ date('Y') }} ZeriPOS by zerithonlabs.com
+    © {{ date('Y') }} SamriddhiHR
 </div>

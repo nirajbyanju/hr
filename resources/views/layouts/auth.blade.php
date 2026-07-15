@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="keyword" content="madpos,pos,inventory,invoice,sales,ecommerce,product,stock,customer">
-    <meta name="description" content="{{ $metaDescription ?? 'Zerithon authentication' }}">
+    <meta name="description" content="{{ $metaDescription ?? 'SamriddhiHR authentication' }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{{ $title ?? config('app.name', 'ZerithonHR') }}</title>
+    <title>{{ $title ?? config('app.name', 'SamriddhiHR') }}</title>
     @php
         $assetsBase = config('madpos_ui.assets_base', 'assets');
         $favicon = config('madpos_ui.favicon', 'assets/img/zerithon-logo.png');

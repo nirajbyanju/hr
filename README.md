@@ -1,23 +1,11 @@
-# HR Payroll
+# SamriddhiHR
 
-Zerithonlabs - Modern HRM + Payroll platform rebuilt with Laravel for real company workflows and long-term maintainability.
+SamriddhiHR - Modern HRM + Payroll platform rebuilt with Laravel for real company workflows and long-term maintainability.
 
 > Legacy version note: this `main` branch is the Laravel rebuild. Older legacy implementation may exist in a separate branch.
 
 <p align="center">
   <img src="public/assets/img/hrpayroll-2.png" alt="HR Payroll Banner" />
-</p>
-
-<h2 align="center">Live Demo</h2>
-
-<p align="center">
-  Explore the hosted Zeri HR demo environment.
-</p>
-
-<p align="center">
-  <a href="https://hr.zerithonlabs.com" target="_blank">
-    <img src="https://img.shields.io/badge/View%20Demo-hr.zerithonlabs.com-2F9B95?style=for-the-badge&logo=googlechrome&logoColor=white" alt="View Zeri HR Demo" />
-  </a>
 </p>
 
 <h3 align="center">💛 Support My Work</h3>
@@ -65,7 +53,7 @@ It is designed with a modular Laravel architecture so teams can run day-to-day H
 
 ## Language Support
 
-Zeri HR includes multilingual UI support for core HR, payroll and admin screens.
+SamriddhiHR includes multilingual UI support for core HR, payroll and admin screens.
 
 🇺🇸 English &nbsp; 🇩🇪 German &nbsp; 🇫🇷 French &nbsp; 🇮🇳 Hindi
 
@@ -139,7 +127,7 @@ npm run dev
 
 ## Default Seeded Admin
 
-- Email: `admin@zerihr.local`
+- Email: `admin@samriddhihr.local`
 - Password: `password`
 - Role: `Admin`
 
@@ -147,7 +135,7 @@ You can change these values before seeding by setting:
 
 ```env
 DEFAULT_ADMIN_NAME="System Admin"
-DEFAULT_ADMIN_EMAIL=admin@zerihr.local
+DEFAULT_ADMIN_EMAIL=admin@samriddhihr.local
 DEFAULT_ADMIN_PASSWORD=password
 ```
 
@@ -177,10 +165,10 @@ All demo users use password `P@ssword`.
 
 | Role | Email |
 | --- | --- |
-| Admin | `demo.admin@zerihr.local` |
-| HR Admin | `hr.admin@zerihr.local` |
-| Department Head | `department.head@zerihr.local` |
-| Employee | `employee@zerihr.local` |
+| Admin | `demo.admin@samriddhihr.local` |
+| HR Admin | `hr.admin@samriddhihr.local` |
+| Department Head | `department.head@samriddhihr.local` |
+| Employee | `employee@samriddhihr.local` |
 
 The login page includes these demo accounts with copy buttons for visitors.
 

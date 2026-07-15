@@ -1,4 +1,4 @@
-@extends('layouts.auth', ['title' => 'ZerithonLabs | Create Account', 'heading' => 'Create Account', 'subtitle' => 'Set up a new ZerithonLabs account to get started.'])
+@extends('layouts.auth', ['title' => 'SamriddhiHR | Create Account', 'heading' => 'Create Account', 'subtitle' => 'Set up a new SamriddhiHR account to get started.'])
 
 @section('content')
     <form method="POST" action="{{ route('register.store') }}">
