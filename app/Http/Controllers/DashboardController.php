@@ -278,22 +278,32 @@ class DashboardController extends Controller
     {
         $todayMonthDay = $today->format('m-d');
         $endMonthDay = $today->addDays(45)->format('m-d');
+        $monthDayExpression = $this->monthDayExpression('date_of_birth');
 
         return Employee::query()
             ->with('department')
             ->whereNotNull('date_of_birth')
             ->where('employment_status', 'active')
             ->when($scopedEmployeeIds !== null, fn ($query) => $query->whereIn('id', $scopedEmployeeIds))
-            ->where(function ($query) use ($todayMonthDay, $endMonthDay): void {
+            ->where(function ($query) use ($monthDayExpression, $todayMonthDay, $endMonthDay): void {
                 if ($todayMonthDay <= $endMonthDay) {
-                    $query->whereRaw("DATE_FORMAT(date_of_birth, '%m-%d') BETWEEN ? AND ?", [$todayMonthDay, $endMonthDay]);
+                    $query->whereRaw("{$monthDayExpression} BETWEEN ? AND ?", [$todayMonthDay, $endMonthDay]);
                     return;
                 }
 
-                $query->whereRaw("DATE_FORMAT(date_of_birth, '%m-%d') >= ?", [$todayMonthDay])
-                    ->orWhereRaw("DATE_FORMAT(date_of_birth, '%m-%d') <= ?", [$endMonthDay]);
+                $query->whereRaw("{$monthDayExpression} >= ?", [$todayMonthDay])
+                    ->orWhereRaw("{$monthDayExpression} <= ?", [$endMonthDay]);
             })
-            ->orderByRaw("DATE_FORMAT(date_of_birth, '%m-%d')");
+            ->orderByRaw($monthDayExpression);
+    }
+
+    private function monthDayExpression(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%m-%d', {$column})",
+            'pgsql' => "to_char({$column}, 'MM-DD')",
+            default => "DATE_FORMAT({$column}, '%m-%d')",
+        };
     }
 
     private function basicAlerts(int $absentToday, int $pendingLeaveRequests, CarbonImmutable $today, ?array $scopedEmployeeIds, string $scope): array

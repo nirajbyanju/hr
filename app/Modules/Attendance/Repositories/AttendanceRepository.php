@@ -7,6 +7,7 @@ use App\Models\Employee;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceRepository
 {
@@ -20,20 +21,24 @@ class AttendanceRepository
             $toDate = (string) ($filters['to_date'] ?? '');
         $employeeId = (int) ($filters['employee_id'] ?? 0);
         $perPage = max(10, min(100, (int) ($filters['per_page'] ?? 20)));
+        $stayMinutesExpression = $this->minuteDiffExpression(
+            'MIN(attendance_logs.check_in_at)',
+            'MAX(attendance_logs.check_out_at)'
+        );
 
         return AttendanceLog::query()
             ->join('employees', 'employees.id', '=', 'attendance_logs.employee_id')
-            ->selectRaw('
+            ->selectRaw("
                 attendance_logs.employee_id,
                 attendance_logs.attendance_date,
                 MIN(attendance_logs.check_in_at) as first_check_in_at,
                 MAX(attendance_logs.check_out_at) as last_check_out_at,
-                TIMESTAMPDIFF(MINUTE, MIN(attendance_logs.check_in_at), MAX(attendance_logs.check_out_at)) as stay_minutes,
+                {$stayMinutesExpression} as stay_minutes,
                 COUNT(attendance_logs.id) as total_entries,
                 employees.employee_code,
                 employees.first_name,
                 employees.last_name
-            ')
+            ")
             ->when($employeeIds !== null, fn ($query) => $query->whereIn('attendance_logs.employee_id', $employeeIds))
             ->when($employeeId > 0, fn ($query) => $query->where('attendance_logs.employee_id', $employeeId))
             ->when($fromDate !== '', fn ($query) => $query->whereDate('attendance_logs.attendance_date', '>=', $fromDate))
@@ -88,6 +93,15 @@ class AttendanceRepository
             ->orderByDesc('attendance_logs.attendance_date')
             ->orderBy('employees.first_name')
             ->get();
+    }
+
+    private function minuteDiffExpression(string $start, string $end): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "(strftime('%s', {$end}) - strftime('%s', {$start})) / 60",
+            'pgsql' => "EXTRACT(EPOCH FROM ({$end} - {$start})) / 60",
+            default => "TIMESTAMPDIFF(MINUTE, {$start}, {$end})",
+        };
     }
 
     /**
