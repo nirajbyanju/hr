@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeLoan;
 use App\Models\EmployeeProvidentFund;
+use App\Models\LeaveApplication;
 use App\Models\LoanInstallment;
 use App\Models\PayrollItem;
 use App\Models\PayrollItemDeduction;
@@ -544,6 +545,7 @@ class PayrollService
 
         $gross = $basicSalary + $allowanceTotal + $bonusTotal;
         $otherDeduction = $this->attachActiveDeductions($item, $employee->id, $periodStart, $periodEnd, $basicSalary, $run->pay_frequency);
+        $otherDeduction += $this->attachUnpaidLeaveDeduction($item, $employee->id, $periodStart, $periodEnd, $basicSalary);
         $totalDeduction = $loanDeduction + $otherDeduction + $providentFundDeduction + $taxDeduction;
 
         $item->update([
@@ -812,5 +814,72 @@ class PayrollService
         }
 
         return $total;
+    }
+
+    /**
+     * Deduct salary for approved leave taken beyond the employee's balance ("unpaid" days,
+     * set at leave-approval time in LeaveApplicationController::process()). The per-day rate
+     * is the employee's basic salary for this run divided by the number of calendar days in
+     * the payroll period, so it scales correctly for both monthly and weekly runs.
+     */
+    private function attachUnpaidLeaveDeduction(PayrollItem $item, int $employeeId, CarbonImmutable $periodStart, CarbonImmutable $periodEnd, float $basicSalary): float
+    {
+        $periodDays = $periodStart->diffInDays($periodEnd) + 1;
+        if ($periodDays <= 0) {
+            return 0.0;
+        }
+
+        $dailyRate = $basicSalary / $periodDays;
+
+        $leaveApplications = LeaveApplication::query()
+            ->where('employee_id', $employeeId)
+            ->where('status', 'approved')
+            ->where('unpaid_days', '>', 0)
+            ->whereDate('start_date', '<=', $periodEnd->toDateString())
+            ->whereDate('end_date', '>=', $periodStart->toDateString())
+            ->get();
+
+        $totalAmount = 0.0;
+
+        foreach ($leaveApplications as $leave) {
+            $leaveStart = CarbonImmutable::parse((string) $leave->start_date);
+            $leaveEnd = CarbonImmutable::parse((string) $leave->end_date);
+            $totalLeaveDays = max(0.01, (float) $leave->total_days);
+            $unpaidDays = (float) $leave->unpaid_days;
+
+            $overlapStart = $leaveStart->greaterThan($periodStart) ? $leaveStart : $periodStart;
+            $overlapEnd = $leaveEnd->lessThan($periodEnd) ? $leaveEnd : $periodEnd;
+            if ($overlapStart->greaterThan($overlapEnd)) {
+                continue;
+            }
+
+            // If the whole leave falls inside this period, deduct the full unpaid amount.
+            // If it spans a period boundary, prorate by how much of the leave's date range
+            // overlaps this period — the schema tracks only a day count, not which specific
+            // calendar days within the leave are the unpaid ones.
+            $overlapDays = $overlapStart->diffInDays($overlapEnd) + 1;
+            $unpaidDaysInPeriod = $overlapDays >= $totalLeaveDays
+                ? $unpaidDays
+                : $unpaidDays * ($overlapDays / $totalLeaveDays);
+
+            $totalAmount += $unpaidDaysInPeriod * $dailyRate;
+        }
+
+        if ($totalAmount <= 0) {
+            return 0.0;
+        }
+
+        $amount = round($totalAmount, 2);
+
+        PayrollItemDeduction::query()->create([
+            'payroll_item_id' => $item->id,
+            'employee_deduction_id' => null,
+            'deduction_type' => 'Unpaid Leave',
+            'amount' => $amount,
+            'reason' => 'Salary reduction for leave days beyond available balance',
+            'comments' => null,
+        ]);
+
+        return $amount;
     }
 }

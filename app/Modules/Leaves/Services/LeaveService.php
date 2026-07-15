@@ -119,7 +119,8 @@ class LeaveService
                     $openingBalance = (float) ($existing?->opening_balance ?? 0);
                     $availed = (float) ($existing?->availed ?? 0);
                     $adjustments = (float) ($existing?->adjustments ?? 0);
-                    $closing = $this->calculateClosing($openingBalance, $allocated, $carriedForward, $earnedCredited, $availed, $adjustments);
+                    $cap = $policy->accrual_cap !== null ? (float) $policy->accrual_cap : null;
+                    $closing = $this->calculateClosing($openingBalance, $allocated, $carriedForward, $earnedCredited, $availed, $adjustments, $cap);
 
                     $this->leaveRepository->upsertBalance((int) $employee->id, (int) $policy->leave_category_id, $year, [
                         'leave_policy_id' => $policy->id,
@@ -153,6 +154,7 @@ class LeaveService
             $earned = (float) ($payload['earned_credited'] ?? $balance->earned_credited ?? 0);
             $availed = (float) ($payload['availed'] ?? $balance->availed ?? 0);
             $adjustments = (float) ($payload['adjustments'] ?? $balance->adjustments ?? 0);
+            $cap = $balance->leavePolicy?->accrual_cap !== null ? (float) $balance->leavePolicy->accrual_cap : null;
 
             $this->leaveRepository->updateBalance($balance, [
                 'opening_balance' => $opening,
@@ -161,7 +163,7 @@ class LeaveService
                 'earned_credited' => $earned,
                 'availed' => $availed,
                 'adjustments' => $adjustments,
-                'closing_balance' => $this->calculateClosing($opening, $allocated, $carried, $earned, $availed, $adjustments),
+                'closing_balance' => $this->calculateClosing($opening, $allocated, $carried, $earned, $availed, $adjustments, $cap),
             ]);
 
             return $balance->fresh() ?? $balance;
@@ -190,6 +192,7 @@ class LeaveService
             'is_earned_leave' => $isEarnedLeave,
             'earned_credit_frequency' => $isEarnedLeave ? (string) ($payload['earned_credit_frequency'] ?? 'monthly') : null,
             'earned_credit_days' => $isEarnedLeave ? (float) ($payload['earned_credit_days'] ?? 0) : 0,
+            'accrual_cap' => isset($payload['accrual_cap']) && $payload['accrual_cap'] !== '' ? (float) $payload['accrual_cap'] : null,
             'is_active' => (bool) ($payload['is_active'] ?? true),
             'notes' => $payload['notes'] ?? null,
         ];
@@ -281,20 +284,27 @@ class LeaveService
 
         return $this->normalizeComputedDays($months * $earnedDays);
     }
-    // Calculate the closing leave balance for an employee based on the opening balance, allocated days, carried forward balance, earned/credited days, availed days, and any adjustments. The method sums up the opening balance, allocated days, carried forward balance, earned/credited days, and adjustments, then subtracts the availed days to determine the final closing balance for the leave category.
+    // Calculate the closing leave balance for an employee based on the opening balance, allocated days, carried forward balance, earned/credited days, availed days, and any adjustments. The method sums up the opening balance, allocated days, carried forward balance, earned/credited days, and adjustments, then subtracts the availed days to determine the final closing balance for the leave category. If the policy defines an accrual cap, the result is clamped so the balance never exceeds it.
     private function calculateClosing(
         float $opening,
         float $allocated,
         float $carriedForward,
         float $earnedCredited,
         float $availed,
-        float $adjustments
+        float $adjustments,
+        ?float $cap = null
     ): float {
-        return $this->normalizeComputedDays($opening + $allocated + $carriedForward + $earnedCredited + $adjustments - $availed);
+        $closing = $this->normalizeComputedDays($opening + $allocated + $carriedForward + $earnedCredited + $adjustments - $availed);
+
+        if ($cap !== null && $cap > 0) {
+            $closing = min($closing, $cap);
+        }
+
+        return $closing;
     }
 
     private function normalizeComputedDays(float $days): float
     {
-        return max(0.0, round($days, 0));
+        return max(0.0, round($days, 2));
     }
 }

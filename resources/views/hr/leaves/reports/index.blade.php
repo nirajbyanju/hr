@@ -5,7 +5,7 @@
 <div class="wrapper-page">
     <div class="page-title d-flex justify-content-between align-items-center">
         <h1><i class="icon-chart"></i> {{ __('Leave Reports') }}</h1>
-        <a href="{{ route('leave-reports.export', ['employee_id' => $filters['employee_id'], 'leave_category_id' => $filters['leave_category_id'], 'status' => $filters['status'], 'from_date' => $filters['from_date'], 'to_date' => $filters['to_date']]) }}"
+        <a href="{{ route('leave-reports.export', ['employee_id' => $filters['employee_id'], 'leave_category_id' => $filters['leave_category_id'], 'status' => $filters['status'], 'search' => $filters['search'] ?? '', 'from_date' => $filters['from_date'], 'to_date' => $filters['to_date']]) }}"
            class="btn btn-custom-default">
             <i class="icon-cloud-download"></i> {{ __('Export Excel (CSV)') }}
         </a>
@@ -18,6 +18,9 @@
             <div class="card no-border">
                 <div class="content_wrapper content-padded">
                     <form method="GET" class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('Search name / code / email') }}">
+                        </div>
                         <div class="col-md-3">
                             <select name="employee_id" class="form-control js-example-basic-single">
                                 <option value="0">{{ __('All Employees') }}</option>
@@ -42,8 +45,8 @@
                         <div class="col-md-2">
                             <select name="status" class="form-control">
                                 <option value="">{{ __('All Status') }}</option>
-                                @foreach(['pending','approved','rejected'] as $status)
-                                    <option value="{{ $status }}" {{ $filters['status'] === $status ? 'selected' : '' }}>{{ __(ucfirst($status)) }}</option>
+                                @foreach(['pending' => 'Pending', 'supervisor_approved' => 'Awaiting HR Approval', 'approved' => 'Approved', 'rejected' => 'Rejected'] as $status => $label)
+                                    <option value="{{ $status }}" {{ $filters['status'] === $status ? 'selected' : '' }}>{{ __($label) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -92,7 +95,10 @@
                                         <td>{{ $application->leaveCategory?->name ?? '-' }}</td>
                                         <td>{{ $application->start_date }} to {{ $application->end_date }}</td>
                                         <td>{{ number_format((float) $application->total_days, 2) }}</td>
-                                        <td>{{ __(ucfirst($application->status)) }}</td>
+                                        <td>{{ __(match($application->status) {
+                                            'supervisor_approved' => 'Awaiting HR Approval',
+                                            default => ucfirst($application->status),
+                                        }) }}</td>
                                         <td>{{ $application->approver?->name ?? '-' }}</td>
                                     </tr>
                                 @empty

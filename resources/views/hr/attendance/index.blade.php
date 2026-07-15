@@ -22,11 +22,12 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border mb-3" id="attendance-entry-form">
+            <div class=" mb-3" id="attendance-entry-form">
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Manual Attendance Entry') }}</h5>
                     <form method="POST" action="{{ route('attendance.store') }}" class="row g-2">
                         @csrf
+                        @php($currentAttendanceTime = now()->format('h:i A'))
                         @if($canManageAttendance && $hasAllAccess)
                             <div class="col-md-3">
                                 <label>{{ __('Employee') }}</label>
@@ -44,27 +45,40 @@
                              <label>{{ __('Date') }}</label>
                             <input type="text"
                                 name="attendance_date"
-                                class="form-control attendance-date-picker" placeholder="{{ __('YYYY-MM-DD') }}"
+                                class="form-control {{ $canEditAttendanceDateTime ? 'attendance-date-picker' : '' }}" placeholder="{{ __('YYYY-MM-DD') }}"
                                 autocomplete="off"
-                                value="{{ old('attendance_date', now()->format('Y-m-d')) }}"
+                                value="{{ $canEditAttendanceDateTime ? old('attendance_date', now()->format('Y-m-d')) : now()->format('Y-m-d') }}"
+                                {{ $canEditAttendanceDateTime ? '' : 'readonly' }}
                                 required
                             >
                         </div>
-                        <div class="col-md-2">
-                            <label>{{ __('Entry Type') }}</label>
-                            @php($entryType = old('entry_type', 'checkin'))
-                            <select name="entry_type" class="form-control" required>
-                                <option value="checkin" {{ $entryType === 'checkin' ? 'selected' : '' }}>{{ __('Check-in') }}</option>
-                                <option value="checkout" {{ $entryType === 'checkout' ? 'selected' : '' }}>{{ __('Check-out') }}</option>
-                            </select>
-                        </div>
+                        @if($canManageAttendance)
+                            <div class="col-md-2">
+                                <label>{{ __('Entry Type') }}</label>
+                                @php($entryType = old('entry_type', 'checkin'))
+                                <select name="entry_type" class="form-control" required>
+                                    <option value="checkin" {{ $entryType === 'checkin' ? 'selected' : '' }}>{{ __('Check-in') }}</option>
+                                    <option value="checkout" {{ $entryType === 'checkout' ? 'selected' : '' }}>{{ __('Check-out') }}</option>
+                                </select>
+                            </div>
+                        @else
+                            <div class="col-md-2">
+                                <label>{{ __('Next Action') }}</label>
+                                <div class="form-control-plaintext">
+                                    <span class="badge {{ ($nextEntryType ?? 'checkin') === 'checkout' ? 'bg-warning' : 'bg-success' }}">
+                                        {{ ($nextEntryType ?? 'checkin') === 'checkout' ? __('Check-out') : __('Check-in') }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endif
                         <div class="col-md-2">
                             <label>{{ __('Time (hh:mm AM/PM)') }}</label>
                             <input type="text" name="entry_time"
-                                class="form-control attendance-time-picker"
+                                class="form-control {{ $canEditAttendanceDateTime ? 'attendance-time-picker' : '' }}"
                                 placeholder="09:01 AM"
                                 autocomplete="off"
-                                value="{{ old('entry_time') }}"
+                                value="{{ $canEditAttendanceDateTime ? old('entry_time') : $currentAttendanceTime }}"
+                                {{ $canEditAttendanceDateTime ? '' : 'readonly' }}
                                 required
                             >
                         </div>
@@ -73,7 +87,15 @@
                                 <input type="text" name="remarks" class="form-control" value="{{ old('remarks') }}" placeholder="{{ __('Optional') }}">
                             </div>
                         <div class="col-md-12 mt-2">
-                            <button type="submit" class="btn btn-custom"><i class="icon-plus"></i> {{ __('Add Attendance') }}</button>
+                            @if($canManageAttendance)
+                                <button type="submit" class="btn btn-custom"><i class="icon-plus"></i> {{ __('Add Attendance') }}</button>
+                            @else
+                                <button type="submit" class="btn btn-custom">
+                                    <i class="icon-clock"></i>
+                                    {{ ($nextEntryType ?? 'checkin') === 'checkout' ? __('Check Out Now') : __('Check In Now') }}
+                                </button>
+                                <small class="text-muted d-block mt-1">{{ __('The system records your next check-in or check-out automatically.') }}</small>
+                            @endif
                             </div>
                     </form>
                 </div>
@@ -159,12 +181,8 @@
                                         <td>{{ $row->first_check_in_at ? \Illuminate\Support\Carbon::parse($row->first_check_in_at)->format('H:i') : '-' }}</td>
                                         <td>{{ $row->last_check_out_at ? \Illuminate\Support\Carbon::parse($row->last_check_out_at)->format('H:i') : '-' }}</td>
                                         <td>
-                                            @php($stayMinutes = is_numeric($row->stay_minutes ?? null) ? max(0, (int) $row->stay_minutes) : null)
-                                            @if($stayMinutes === null)
-                                                -
-                                            @else
-                                                {{ intdiv($stayMinutes, 60) }}h {{ $stayMinutes % 60 }}m
-                                            @endif
+                                            @php($workedMinutes = max(0, (int) ($row->worked_minutes ?? 0)))
+                                            {{ intdiv($workedMinutes, 60) }}h {{ $workedMinutes % 60 }}m
                                         </td>
                                         <td>{{ (int) $row->total_entries }}</td>
                                     </tr>

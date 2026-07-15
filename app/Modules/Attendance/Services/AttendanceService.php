@@ -42,6 +42,19 @@ class AttendanceService
         });
     }
 
+    /**
+     * Decide whether an employee's next self-service attendance action should be a
+     * check-in or a check-out, based on the entries they already have for that day.
+     * If there are more check-ins than check-outs the employee is currently "in",
+     * so the next action is a check-out; otherwise it is a check-in.
+     */
+    public function determineNextEntryType(int $employeeId, string $attendanceDate): string
+    {
+        $counts = $this->attendanceRepository->dayEntryCounts($employeeId, $attendanceDate);
+
+        return $counts['checkins'] > $counts['checkouts'] ? 'checkout' : 'checkin';
+    }
+
     public function isEntryDateTimeValid(string $attendanceDate, string $entryTime): bool
     {
         $value = trim($attendanceDate . ' ' . trim($entryTime));

@@ -31,10 +31,21 @@ class LeaveApplicationController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $balances = $employee
+            ? EmployeeLeaveBalance::query()
+                ->where('employee_id', (int) $employee->id)
+                ->where('year', (int) now()->year)
+                ->with('leaveCategory:id,name,code')
+                ->get()
+            : collect();
+
         return view('hr.leaves.applications.index', [
             'leaveCategories' => LeaveCategory::query()->where('is_active', true)->orderBy('name')->get(),
             'applications' => $applications,
             'employee' => $employee,
+            'balances' => $balances,
+            'hasManager' => (bool) ($employee?->reports_to_id),
+            'isAdminApplicant' => $user->hasRole('admin'),
         ]);
     }
     // The store method handles the submission of a new leave application. It validates the request, checks for various business rules such as overlapping leaves, leave balance, and category constraints, and then creates a new LeaveApplication record if all checks pass. If any validation or business rule fails, it redirects back with appropriate error messages.
@@ -86,33 +97,75 @@ class LeaveApplicationController extends Controller
             return redirect()->route('leave-applications.index')->withErrors(['start_date' => 'You already have a pending/approved leave in the selected date range.'])->withInput();
         }
 
-        $balance = EmployeeLeaveBalance::query()
-            ->where('employee_id', (int) $employee->id)
-            ->where('leave_category_id', (int) $leaveCategory->id)
-            ->where('year', (int) $startDate->year)
-            ->first();
+        // Balance is intentionally not checked here. An employee may submit even with an
+        // insufficient or missing balance; the approver sees the paid/unpaid day split at
+        // approval time (see process()), and any unpaid portion reduces salary in payroll.
+        $isAdmin = $user->hasRole('admin');
 
-        if (! $balance) {
-        return redirect()->route('leave-applications.index')->withErrors(['leave_category_id' => 'No leave balance found for selected category and year. Please contact HR.'])->withInput();
-        }
+        $application = DB::transaction(function () use ($employee, $leaveCategory, $startDate, $endDate, $totalDays, $isHalfDay, $validated, $isAdmin, $user): LeaveApplication {
+            $application = LeaveApplication::query()->create([
+                'employee_id' => (int) $employee->id,
+                'leave_category_id' => (int) $leaveCategory->id,
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+                'total_days' => $totalDays,
+                'is_half_day' => $isHalfDay,
+                'half_day_session' => $isHalfDay ? (string) $validated['half_day_session'] : null,
+                'reason' => (string) $validated['reason'],
+                'status' => 'pending',
+            ]);
 
-        if ((float) $balance->closing_balance < $totalDays) {
-        return redirect()->route('leave-applications.index')->withErrors(['leave_category_id' => 'Insufficient leave balance for this request.'])->withInput();
-        }
+            // Administrators do not go through an approver: their request is approved on
+            // submission, deducting balance immediately (unpaid overflow still applies).
+            if ($isAdmin) {
+                $this->applyLeaveApproval($application, $user, 'Auto-approved (admin)');
+            }
 
-        LeaveApplication::query()->create([
-            'employee_id' => (int) $employee->id,
-            'leave_category_id' => (int) $leaveCategory->id,
-            'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => $endDate->format('Y-m-d'),
-            'total_days' => $totalDays,
-            'is_half_day' => $isHalfDay,
-            'half_day_session' => $isHalfDay ? (string) $validated['half_day_session'] : null,
-            'reason' => (string) $validated['reason'],
-            'status' => 'pending',
+            return $application;
+        });
+
+        $message = $application->status === 'approved'
+            ? __('Leave request approved automatically.')
+            : __('Leave application submitted successfully.');
+
+        return redirect()->route('leave-applications.index')->with('success', $message);
+    }
+
+    // The onLeaveIndex method shows an admin/supervisor roster of who is currently on leave
+    // and who has upcoming approved leave, scoped to the whole company for HR/all-access
+    // users or to the requester's own reports for a supervisor.
+    public function onLeaveIndex(Request $request): View
+    {
+        $user = $request->user();
+        $hasAllAccess = $this->hasAllAccess($user);
+        $scopeIds = $hasAllAccess ? null : $this->scopedOwnAndSubordinateIds($user);
+        $today = now()->format('Y-m-d');
+
+        $base = fn () => LeaveApplication::query()
+            ->where('status', 'approved')
+            ->with([
+                'employee:id,employee_code,first_name,last_name',
+                'leaveCategory:id,name,code',
+            ])
+            ->when($scopeIds !== null, fn ($q) => $q->whereIn('employee_id', $scopeIds));
+
+        $onLeaveToday = $base()
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->orderBy('end_date')
+            ->get();
+
+        $upcoming = $base()
+            ->whereDate('start_date', '>', $today)
+            ->orderBy('start_date')
+            ->limit(100)
+            ->get();
+
+        return view('hr.leaves.on_leave.index', [
+            'onLeaveToday' => $onLeaveToday,
+            'upcoming' => $upcoming,
+            'today' => $today,
         ]);
-
-        return redirect()->route('leave-applications.index')->with('success', __('Leave application submitted successfully.'));
     }
 
     // The approvalsIndex method displays a paginated list of leave applications that require the current user's approval. It applies filters based on the request parameters and scopes the results to the user's subordinates if they do not have all-access permissions. The method returns a view with the filtered and paginated applications, along with the list of employees for filtering and the applied filters for reference.
@@ -124,7 +177,10 @@ class LeaveApplicationController extends Controller
         $scopedEmployeeIds = $hasAllAccess ? null : $this->subordinateEmployeeIds($user);
 
         $filters = [
-            'status' => (string) $request->input('status', 'pending'),
+            // 'actionable' (the default) means "needs someone's action": pending (awaiting
+            // supervisor sign-off) or supervisor_approved (awaiting HR final approval) — so
+            // both a supervisor and HR land on a useful list without picking a filter first.
+            'status' => (string) $request->input('status', 'actionable'),
             'employee_id' => (int) $request->input('employee_id', 0),
             'from_date' => (string) $request->input('from_date', ''),
             'to_date' => (string) $request->input('to_date', ''),
@@ -135,14 +191,55 @@ class LeaveApplicationController extends Controller
             $filters['employee_id'] = 0;
         }
 
-        return view('hr.leaves.approvals.index', [
-            'applications' => $this->buildApprovalsQuery($filters, $scopedEmployeeIds)
+        $applications = $this->buildApprovalsQuery($filters, $scopedEmployeeIds)
             ->paginate($filters['per_page'])
-            ->withQueryString(),
+            ->withQueryString();
+
+        return view('hr.leaves.approvals.index', [
+            'applications' => $applications,
+            'pendingSplits' => $this->previewPendingSplits($applications->getCollection()),
             'employees' => $this->filterableEmployees($hasAllAccess ? null : $scopedEmployeeIds),
             'filters' => $filters,
             'hasAllAccess' => $hasAllAccess,
+            'isFinalApprover' => $this->isFinalApprover($user),
         ]);
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, LeaveApplication> $applications
+     * @return array<int, array{paid: float, unpaid: float, available: float}>
+     * Preview, for each still-pending application, how many days would be paid (covered by
+     * the employee's current balance) versus unpaid if it were approved right now — so the
+     * approver can see the payroll impact before approving, not after.
+     */
+    private function previewPendingSplits(\Illuminate\Support\Collection $applications): array
+    {
+        $splits = [];
+
+        foreach ($applications as $application) {
+            if (! in_array($application->status, ['pending', 'supervisor_approved'], true)) {
+                continue;
+            }
+
+            $year = (int) Carbon::parse((string) $application->start_date)->year;
+            $balance = EmployeeLeaveBalance::query()
+                ->where('employee_id', (int) $application->employee_id)
+                ->where('leave_category_id', (int) $application->leave_category_id)
+                ->where('year', $year)
+                ->first();
+
+            $days = (float) $application->total_days;
+            $available = $balance ? max(0.0, (float) $balance->closing_balance) : 0.0;
+            $paid = round(min($days, $available), 2);
+
+            $splits[$application->id] = [
+                'paid' => $paid,
+                'unpaid' => round($days - $paid, 2),
+                'available' => $available,
+            ];
+        }
+
+        return $splits;
     }
 
     // The exportApprovalsCsv method allows the user to export the list of leave applications that require their approval as a CSV file. It applies the same filters and scoping as the approvalsIndex method to ensure that only the relevant applications are included in the export. The method generates a streamed response that outputs the CSV data, including a header row and properly formatted application data for each row. The CSV file is encoded in UTF-8 with a Byte Order Mark (BOM) to ensure compatibility with various spreadsheet applications.
@@ -215,69 +312,115 @@ class LeaveApplicationController extends Controller
         ]);
     }
 
-    // The process method handles the approval or rejection of a leave application. It checks if the current user has the necessary permissions to process the application, verifies that the application is still pending, and then updates the application's status accordingly. If approving, it also checks for sufficient leave balance and updates the balance if the approval is successful. The method uses a database transaction to ensure data integrity during the approval process. If any checks fail, it redirects back with appropriate error messages.
+    // The process method handles a two-stage approval: the applicant's supervisor signs off
+    // first (status -> supervisor_approved, no balance effect), then HR/admin gives the final
+    // approval (status -> approved, balance deducted). HR may also finalize directly from
+    // pending without a prior supervisor sign-off, but must supply an override reason unless
+    // the employee has no assigned supervisor at all. Rejection is allowed from either stage.
     public function process(ProcessLeaveApplicationRequest $request, LeaveApplication $leaveApplication): RedirectResponse
     {
         $user = $request->user();
         $hasAllAccess = $this->hasAllAccess($user);
+        $isFinalApprover = $this->isFinalApprover($user);
         $subordinateIds = $this->subordinateEmployeeIds($user);
+        $isSupervisorInScope = in_array((int) $leaveApplication->employee_id, $subordinateIds, true);
 
-        if (! $hasAllAccess && ! in_array((int) $leaveApplication->employee_id, $subordinateIds, true)) {
-        return redirect()->route('leave-approvals.index')->withErrors(['action' => 'You are not allowed to process this leave request.']);
+        if (! $hasAllAccess && ! $isFinalApprover && ! $isSupervisorInScope) {
+            return redirect()->route('leave-approvals.index')->withErrors(['action' => 'You are not allowed to process this leave request.']);
         }
-        if ($leaveApplication->status !== 'pending') {
-        return redirect()->route('leave-approvals.index')->withErrors(['action' => 'Only pending leave requests can be processed.']);
+        if (! in_array($leaveApplication->status, ['pending', 'supervisor_approved'], true)) {
+            return redirect()->route('leave-approvals.index')->withErrors(['action' => 'This leave request has already been finalized.']);
         }
 
         $validated = $request->validated();
         $action = (string) $validated['action'];
+        $remarks = (string) ($validated['approval_remarks'] ?? '');
+        $overrideReason = trim((string) ($validated['override_reason'] ?? ''));
+        $hasSupervisor = (bool) $leaveApplication->employee?->reports_to_id;
+
+        if ($action === 'approve' && $isFinalApprover && $leaveApplication->status === 'pending' && $hasSupervisor && $overrideReason === '') {
+            return redirect()->route('leave-approvals.index')->withErrors(['override_reason' => 'Provide a reason for approving before the supervisor has signed off.']);
+        }
+
         try {
-            DB::transaction(function () use ($leaveApplication, $user, $action, $validated): void {
-                if ($action === 'approve') {
-                    $year = (int) Carbon::parse((string) $leaveApplication->start_date)->year;
-                    $balance = EmployeeLeaveBalance::query()
-                    ->where('employee_id', (int) $leaveApplication->employee_id)
-                        ->where('leave_category_id', (int) $leaveApplication->leave_category_id)
-                        ->where('year', $year)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (! $balance) {
-                        throw new \RuntimeException('No leave balance found to approve this request.');
-                    }
-
-                    $days = (float) $leaveApplication->total_days;
-                    if ((float) $balance->closing_balance < $days) {
-                        throw new \RuntimeException('Insufficient leave balance for approval.');
-                    }
-
-                    $balance->update([
-                        'availed' => round((float) $balance->availed + $days, 2),
-                        'closing_balance' => round((float) $balance->closing_balance - $days, 2),
-                    ]);
-
+            DB::transaction(function () use ($leaveApplication, $user, $action, $remarks, $overrideReason, $isFinalApprover, $hasSupervisor): void {
+                if ($action === 'reject') {
                     $leaveApplication->update([
-                        'status' => 'approved',
+                        'status' => 'rejected',
                         'approved_by' => $user->id,
                         'approved_at' => now(),
-                        'approval_remarks' => (string) ($validated['approval_remarks'] ?? ''),
+                        'approval_remarks' => $remarks,
                     ]);
 
                     return;
                 }
 
-                $leaveApplication->update([
-                    'status' => 'rejected',
-                    'approved_by' => $user->id,
-                    'approved_at' => now(),
-                    'approval_remarks' => (string) ($validated['approval_remarks'] ?? ''),
-                ]);
+                // Approve.
+                if (! $isFinalApprover) {
+                    // Stage 1: supervisor sign-off only. No balance effect.
+                    $leaveApplication->update([
+                        'status' => 'supervisor_approved',
+                        'supervisor_approved_by' => $user->id,
+                        'supervisor_approved_at' => now(),
+                        'supervisor_remarks' => $remarks,
+                    ]);
+
+                    return;
+                }
+
+                // Stage 2 (or a direct HR finalization): balance-affecting final approval.
+                if ($leaveApplication->status === 'pending' && $hasSupervisor) {
+                    $leaveApplication->update(['override_reason' => $overrideReason]);
+                }
+
+                $this->applyLeaveApproval($leaveApplication, $user, $remarks);
             });
         } catch (\RuntimeException $exception) {
             return redirect()->route('leave-approvals.index')->withErrors(['action' => $exception->getMessage()]);
         }
 
         return redirect()->route('leave-approvals.index')->with('success', __('Leave request processed successfully.'));
+    }
+
+    /**
+     * Approve a leave application: split it into paid days (covered by the employee's
+     * balance) and unpaid days (beyond it), deduct the paid portion from the balance, and
+     * mark the application approved. Shared by the approvals workflow (process()) and the
+     * admin auto-approval on submission (store()). Must be called inside a DB transaction.
+     */
+    private function applyLeaveApproval(LeaveApplication $leaveApplication, User $approver, ?string $remarks = null): void
+    {
+        $year = (int) Carbon::parse((string) $leaveApplication->start_date)->year;
+        $balance = EmployeeLeaveBalance::query()
+            ->where('employee_id', (int) $leaveApplication->employee_id)
+            ->where('leave_category_id', (int) $leaveApplication->leave_category_id)
+            ->where('year', $year)
+            ->lockForUpdate()
+            ->first();
+
+        // As much of the request as the balance covers is "paid" (and deducted from the
+        // balance); anything beyond that is "unpaid" and reduces the employee's salary in
+        // payroll for the period the leave falls in.
+        $days = (float) $leaveApplication->total_days;
+        $availableBalance = $balance ? max(0.0, (float) $balance->closing_balance) : 0.0;
+        $paidDays = round(min($days, $availableBalance), 2);
+        $unpaidDays = round($days - $paidDays, 2);
+
+        if ($balance && $paidDays > 0) {
+            $balance->update([
+                'availed' => round((float) $balance->availed + $paidDays, 2),
+                'closing_balance' => round((float) $balance->closing_balance - $paidDays, 2),
+            ]);
+        }
+
+        $leaveApplication->update([
+            'status' => 'approved',
+            'paid_days' => $paidDays,
+            'unpaid_days' => $unpaidDays,
+            'approved_by' => $approver->id,
+            'approved_at' => now(),
+            'approval_remarks' => (string) ($remarks ?? ''),
+        ]);
     }
 
     // The reportsIndex method displays a paginated list of leave applications based on various filters such as status, employee, leave category, and date range. It also scopes the results based on the user's permissions, allowing them to see only their own applications or those of their subordinates if they do not have all-access permissions. The method returns a view with the filtered and paginated applications, along with the list of employees and leave categories for filtering, and the applied filters for reference.
@@ -302,6 +445,7 @@ class LeaveApplicationController extends Controller
             'status' => (string) $request->input('status', ''),
             'employee_id' => (int) $request->input('employee_id', 0),
             'leave_category_id' => (int) $request->input('leave_category_id', 0),
+            'search' => trim((string) $request->input('search', '')),
             'from_date' => (string) $request->input('from_date', now()->startOfYear()->format('Y-m-d')),
             'to_date' => (string) $request->input('to_date', now()->format('Y-m-d')),
             'per_page' => max(10, min(100, (int) $request->input('per_page', 20))),
@@ -344,6 +488,7 @@ class LeaveApplicationController extends Controller
             'status' => (string) $request->input('status', ''),
             'employee_id' => (int) $request->input('employee_id', 0),
             'leave_category_id' => (int) $request->input('leave_category_id', 0),
+            'search' => trim((string) $request->input('search', '')),
             'from_date' => (string) $request->input('from_date', now()->startOfYear()->format('Y-m-d')),
             'to_date' => (string) $request->input('to_date', now()->format('Y-m-d')),
         ];
@@ -431,6 +576,18 @@ class LeaveApplicationController extends Controller
     }
 
     /**
+     * HR/Admin tier: authority to give the final, balance-affecting leave approval. Deliberately
+     * narrower than hasAllAccess() (which also includes leave.report, used only for list
+     * visibility) — a department-head/supervisor with leave.approve + leave.report can sign off
+     * at stage one, but only leave.manage-balances/leave.manage-quotas holders (or admins)
+     * can finalize.
+     */
+    private function isFinalApprover(User $user): bool
+    {
+        return $user->hasAnyPermission(['leave.manage-balances', 'leave.manage-quotas']) || $user->hasRole('admin');
+    }
+
+    /**
      * @param array<string, mixed> $filters
      * @param array<int, int>|null $scopeIds
      * The buildReportQuery method constructs an Eloquent query for retrieving leave applications based on the provided filters and scope. It applies various conditions to the query, such as filtering by status, employee ID, leave category ID, and date range. It also scopes the query to a specific set of employee IDs if provided (for users without all-access permissions). The method includes eager loading of related models like employee details, salary grade, leave category, and approver information to optimize database queries when retrieving the data for reports. The resulting query builder instance can then be further modified or executed to get the desired results for reporting purposes.
@@ -449,6 +606,18 @@ class LeaveApplicationController extends Controller
                 ->when((string) ($filters['status'] ?? '') !== '', fn ($q) => $q->where('status', (string) $filters['status']))
                 ->when((int) ($filters['employee_id'] ?? 0) > 0, fn ($q) => $q->where('employee_id', (int) $filters['employee_id']))
                 ->when((int) ($filters['leave_category_id'] ?? 0) > 0, fn ($q) => $q->where('leave_category_id', (int) $filters['leave_category_id']))
+                ->when((string) ($filters['search'] ?? '') !== '', function ($q) use ($filters): void {
+                    $term = '%' . (string) $filters['search'] . '%';
+                    $q->whereHas('employee', function ($employeeQuery) use ($term): void {
+                        $employeeQuery
+                            ->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('employee_code', 'like', $term)
+                            ->orWhereHas('user', function ($userQuery) use ($term): void {
+                                $userQuery->where('name', 'like', $term)->orWhere('email', 'like', $term);
+                            });
+                    });
+                })
             ->whereDate('start_date', '>=', (string) ($filters['from_date'] ?? now()->startOfYear()->format('Y-m-d')))
             ->whereDate('end_date', '<=', (string) ($filters['to_date'] ?? now()->format('Y-m-d')))
             ->orderByDesc('id');
@@ -469,7 +638,8 @@ class LeaveApplicationController extends Controller
                 'approver:id,name',
             ])
                 ->when($scopeIds !== null, fn ($q) => $q->whereIn('employee_id', $scopeIds))
-            ->when((string) ($filters['status'] ?? '') !== '', fn ($q) => $q->where('status', (string) $filters['status']))
+            ->when((string) ($filters['status'] ?? '') === 'actionable', fn ($q) => $q->whereIn('status', ['pending', 'supervisor_approved']))
+            ->when(! in_array((string) ($filters['status'] ?? ''), ['', 'actionable'], true), fn ($q) => $q->where('status', (string) $filters['status']))
             ->when((int) ($filters['employee_id'] ?? 0) > 0, fn ($q) => $q->where('employee_id', (int) $filters['employee_id']))
             ->when((string) ($filters['from_date'] ?? '') !== '', fn ($q) => $q->whereDate('start_date', '>=', (string) $filters['from_date']))
                 ->when((string) ($filters['to_date'] ?? '') !== '', fn ($q) => $q->whereDate('end_date', '<=', (string) $filters['to_date']))

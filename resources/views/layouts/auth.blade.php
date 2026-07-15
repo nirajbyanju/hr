@@ -10,8 +10,8 @@
     <title>{{ $title ?? config('app.name', 'SamriddhiHR') }}</title>
     @php
         $assetsBase = config('madpos_ui.assets_base', 'assets');
-        $favicon = config('madpos_ui.favicon', 'assets/img/zerithon-logo.png');
-        $logo = config('madpos_ui.logo', 'assets/img/zerithon-logo.png');
+        $favicon = config('madpos_ui.favicon', 'assets/img/zerithon-logo1.png');
+        $logo = config('madpos_ui.logo', 'assets/img/zerithon-logo1.png');
     @endphp
     <link rel="apple-touch-icon" href="{{ asset($favicon) }}">
     <link rel="icon" href="{{ asset($favicon) }}">

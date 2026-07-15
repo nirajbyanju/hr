@@ -14,6 +14,28 @@
             @if(! $employee)
                 <div class="alert alert-danger">{{ __('Your account is not linked with an employee profile. Contact HR.') }}</div>
             @else
+                @if($balances->isNotEmpty())
+                    <div class="row g-2 mb-3">
+                        @foreach($balances as $balance)
+                            <div class="col-6 col-md-3 col-lg-2">
+                                <div class="">
+                                    <div class="content_wrapper p-3 text-center">
+                                        <div class="text-muted" style="font-size:12px;">{{ $balance->leaveCategory?->name ?? '-' }}</div>
+                                        <div style="font-size:22px; font-weight:700;">{{ number_format((float) $balance->closing_balance, 2) }}</div>
+                                        <div class="text-muted" style="font-size:11px;">{{ __('days available') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($isAdminApplicant)
+                    <div class="alert alert-info">{{ __('As an administrator, your leave request is approved automatically on submission.') }}</div>
+                @elseif(! $hasManager)
+                    <div class="alert alert-warning">{{ __('No direct supervisor is set on your profile — your request will be routed to HR for approval.') }}</div>
+                @endif
+
                 <div class="card no-border mb-3">
                     <div class="content_wrapper content-padded">
                             <h5 class="table_banner_title mb-3">{{ __('New Leave Request') }}</h5>
@@ -95,6 +117,8 @@
                                             <span class="badge bg-success">{{ __('Approved') }}</span>
                                         @elseif($application->status === 'rejected')
                                             <span class="badge bg-danger">{{ __('Rejected') }}</span>
+                                        @elseif($application->status === 'supervisor_approved')
+                                            <span class="badge bg-info text-dark">{{ __('Awaiting HR Approval') }}</span>
                                         @else
                                             <span class="badge bg-warning text-dark">{{ __('Pending') }}</span>
                                         @endif

@@ -85,6 +85,14 @@ class User extends Authenticatable
         return $this->roles()->where('slug', $slug)->exists();
     }
 
+    /**
+     * @param array<int, string> $slugs
+     */
+    public function hasAnyRole(array $slugs): bool
+    {
+        return $this->roles()->whereIn('slug', $slugs)->exists();
+    }
+
     public function hasPermission(string $permissionSlug): bool
     {
         return in_array($permissionSlug, $this->permissionSlugs(), true);

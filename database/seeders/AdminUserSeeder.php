@@ -99,14 +99,23 @@ class AdminUserSeeder extends Seeder
 
         $allPermissionIds = $permissions->pluck('id')->all();
 
+        // super-admin is a non-operational system owner and must not be able to file leave
+        // requests, so it receives every permission except leave.apply. admin keeps all.
+        $leaveApplyId = $permissions->get('leave.apply')?->id;
+        $superAdminPermissionIds = $leaveApplyId !== null
+            ? array_values(array_filter($allPermissionIds, fn ($id) => $id !== $leaveApplyId))
+            : $allPermissionIds;
+
         foreach ($this->defaultRolePermissionRules() as $roleSlug => $rules) {
             if (! isset($roles[$roleSlug])) {
                 continue;
             }
 
-            $permissionIds = $roleSlug === 'admin' || $roleSlug === 'super-admin'
-                ? $allPermissionIds
-                : $this->permissionIdsForRules($rules, $permissions, $permissionsByGroup);
+            $permissionIds = match ($roleSlug) {
+                'admin' => $allPermissionIds,
+                'super-admin' => $superAdminPermissionIds,
+                default => $this->permissionIdsForRules($rules, $permissions, $permissionsByGroup),
+            };
 
             $roles[$roleSlug]->permissions()->sync($permissionIds);
         }
@@ -347,6 +356,8 @@ class AdminUserSeeder extends Seeder
                     'designation.view',
                     'holiday.view',
                     'audit.view',
+                    'leave.view',
+                    'leave.apply',
                 ],
             ],
             'finance-manager' => [
@@ -366,6 +377,8 @@ class AdminUserSeeder extends Seeder
                     'payroll.report',
                     'provident_fund.view',
                     'provident_fund.report',
+                    'leave.view',
+                    'leave.apply',
                 ],
             ],
             'department-head' => [
@@ -442,6 +455,7 @@ class AdminUserSeeder extends Seeder
                     'attendance.export',
                     'leave.view',
                     'leave.report',
+                    'leave.apply',
                     'payroll.view',
                     'payroll.report',
                     'payslip.view',

@@ -6,8 +6,8 @@ use App\Models\AttendanceLog;
 use App\Models\Employee;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as SupportCollection;
-use Illuminate\Support\Facades\DB;
 
 class AttendanceRepository
 {
@@ -21,19 +21,13 @@ class AttendanceRepository
             $toDate = (string) ($filters['to_date'] ?? '');
         $employeeId = (int) ($filters['employee_id'] ?? 0);
         $perPage = max(10, min(100, (int) ($filters['per_page'] ?? 20)));
-        $stayMinutesExpression = $this->minuteDiffExpression(
-            'MIN(attendance_logs.check_in_at)',
-            'MAX(attendance_logs.check_out_at)'
-        );
-
-        return AttendanceLog::query()
+        $paginator = AttendanceLog::query()
             ->join('employees', 'employees.id', '=', 'attendance_logs.employee_id')
             ->selectRaw("
                 attendance_logs.employee_id,
                 attendance_logs.attendance_date,
                 MIN(attendance_logs.check_in_at) as first_check_in_at,
                 MAX(attendance_logs.check_out_at) as last_check_out_at,
-                {$stayMinutesExpression} as stay_minutes,
                 COUNT(attendance_logs.id) as total_entries,
                 employees.employee_code,
                 employees.first_name,
@@ -54,6 +48,16 @@ class AttendanceRepository
             ->orderBy('employees.first_name')
             ->paginate($perPage)
             ->withQueryString();
+
+        $workedMinutes = $this->workedMinutesByAttendance($paginator->getCollection());
+        $paginator->setCollection($paginator->getCollection()->map(function (object $row) use ($workedMinutes): object {
+            $key = $this->attendanceKey((int) $row->employee_id, (string) $row->attendance_date);
+            $row->worked_minutes = $workedMinutes[$key] ?? 0;
+
+            return $row;
+        }));
+
+        return $paginator;
     }
 
     /**
@@ -95,13 +99,63 @@ class AttendanceRepository
             ->get();
     }
 
-    private function minuteDiffExpression(string $start, string $end): string
+    /**
+     * Total only completed check-in/check-out pairs for each attendance day.
+     * Breaks between pairs are intentionally excluded.
+     *
+     * @param SupportCollection<int, object> $attendanceRows
+     * @return array<string, int>
+     */
+    private function workedMinutesByAttendance(SupportCollection $attendanceRows): array
     {
-        return match (DB::connection()->getDriverName()) {
-            'sqlite' => "(strftime('%s', {$end}) - strftime('%s', {$start})) / 60",
-            'pgsql' => "EXTRACT(EPOCH FROM ({$end} - {$start})) / 60",
-            default => "TIMESTAMPDIFF(MINUTE, {$start}, {$end})",
-        };
+        if ($attendanceRows->isEmpty()) {
+            return [];
+        }
+
+        $keys = $attendanceRows
+            ->mapWithKeys(fn (object $row): array => [$this->attendanceKey((int) $row->employee_id, (string) $row->attendance_date) => true]);
+
+        $logs = AttendanceLog::query()
+            ->select(['employee_id', 'attendance_date', 'check_in_at', 'check_out_at'])
+            ->whereIn('employee_id', $attendanceRows->pluck('employee_id')->unique()->all())
+            ->whereIn('attendance_date', $attendanceRows->pluck('attendance_date')->unique()->all())
+            ->orderByRaw('COALESCE(check_in_at, check_out_at)')
+            ->get()
+            ->filter(fn (AttendanceLog $log): bool => isset($keys[$this->attendanceKey((int) $log->employee_id, (string) $log->attendance_date)]));
+
+        return $logs
+            ->groupBy(fn (AttendanceLog $log): string => $this->attendanceKey((int) $log->employee_id, (string) $log->attendance_date))
+            ->map(fn (Collection $dayLogs): int => $this->sumCompletedSessions($dayLogs))
+            ->all();
+    }
+
+    /**
+     * @param Collection<int, AttendanceLog> $logs
+     */
+    private function sumCompletedSessions(Collection $logs): int
+    {
+        $openCheckIn = null;
+        $minutes = 0;
+
+        foreach ($logs as $log) {
+            if ($log->check_in_at) {
+                $openCheckIn ??= Carbon::parse($log->check_in_at);
+                continue;
+            }
+
+            if ($log->check_out_at && $openCheckIn !== null) {
+                $checkOut = Carbon::parse($log->check_out_at);
+                $minutes += max(0, $openCheckIn->diffInMinutes($checkOut, false));
+                $openCheckIn = null;
+            }
+        }
+
+        return $minutes;
+    }
+
+    private function attendanceKey(int $employeeId, mixed $attendanceDate): string
+    {
+        return $employeeId . '|' . Carbon::parse($attendanceDate)->toDateString();
     }
 
     /**
@@ -153,6 +207,28 @@ class AttendanceRepository
                 ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+    }
+
+    /**
+     * Count the check-in and check-out entries an employee already has for a given day.
+     *
+     * @return array{checkins: int, checkouts: int}
+     */
+    public function dayEntryCounts(int $employeeId, string $attendanceDate): array
+    {
+        $row = AttendanceLog::query()
+            ->where('employee_id', $employeeId)
+            ->whereDate('attendance_date', $attendanceDate)
+            ->selectRaw('
+                COUNT(CASE WHEN check_in_at IS NOT NULL THEN 1 END) as checkins,
+                COUNT(CASE WHEN check_out_at IS NOT NULL THEN 1 END) as checkouts
+            ')
+            ->first();
+
+        return [
+            'checkins' => (int) ($row->checkins ?? 0),
+            'checkouts' => (int) ($row->checkouts ?? 0),
+        ];
     }
 
     /**

@@ -81,7 +81,7 @@
                             <span>{{ __('Attendance') }}</span>
                         </a>
                         <ul aria-expanded="{{ ($s['isAttendance'] ?? false) ? 'true' : 'false' }}">
-                            @if(($s['canAttendanceView'] ?? false) || ($s['canAttendanceManage'] ?? false))
+                            @if(($s['canAttendanceView'] ?? false) || ($s['canAttendanceClock'] ?? false) || ($s['canAttendanceManage'] ?? false))
                                 <li class="{{ request()->routeIs('attendance.index') ? 'active' : '' }}"><a href="{{ route('attendance.index') }}">{{ __('Attendances') }}</a></li>
                             @endif
                             @if($s['canAttendanceApiIntegration'] ?? false)
@@ -120,7 +120,7 @@
                     </li>
                 @endif
 
-                @if(($s['canLeaveView'] ?? false) || ($s['canLeaveManageCategories'] ?? false) || ($s['canLeaveManageQuotas'] ?? false))
+                @if(($s['canLeaveView'] ?? false) || ($s['canLeaveApply'] ?? false) || ($s['canLeaveApprove'] ?? false) || ($s['canLeaveReport'] ?? false) || ($s['canLeaveManageCategories'] ?? false) || ($s['canLeaveManageQuotas'] ?? false))
                     <li id="menu-leave" data-id="menu-leave" class="main {{ ($s['isLeave'] ?? false) ? 'active' : '' }}">
                         <a class="has-arrow" href="#" aria-expanded="{{ ($s['isLeave'] ?? false) ? 'true' : 'false' }}">
                             <i class="icon-calendar"></i>
@@ -135,6 +135,9 @@
                             @endif
                             @if($s['canLeaveApprove'] ?? false)
                                 <li class="{{ request()->routeIs('leave-approvals.*') ? 'active' : '' }}"><a href="{{ route('leave-approvals.index') }}">{{ __('Leave Approvals') }}</a></li>
+                            @endif
+                            @if($s['canLeaveRoster'] ?? false)
+                                <li class="{{ request()->routeIs('leave-on-leave.*') ? 'active' : '' }}"><a href="{{ route('leave-on-leave.index') }}">{{ __('On Leave') }}</a></li>
                             @endif
                             @if(($s['canLeaveReport'] ?? false) || ($s['canLeaveApprove'] ?? false) || ($s['canLeaveView'] ?? false))
                                 <li class="{{ request()->routeIs('leave-reports.*') ? 'active' : '' }}"><a href="{{ route('leave-reports.index') }}">{{ __('Leave Reports') }}</a></li>
