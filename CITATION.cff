@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: HR Payroll
+message: "If you use this project, please cite it using the metadata below."
+type: software
+authors:
+  - family-names: Soyeb
+    given-names: Nawjesh
+    alias: Devnawjesh
+repository-code: "https://github.com/Devnawjesh/hr-payroll"
+url: "https://github.com/Devnawjesh/hr-payroll"
+license: "See repository license"
+abstract: "HR Payroll is a human resource and payroll management system maintained by Nawjesh Soyeb."

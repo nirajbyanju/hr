@@ -1,0 +1,84 @@
+@extends('layouts.backend')
+
+@section('content')
+<div class="wrapper-page">
+    <div class="page-title">
+        <h1><i class="icon-user"></i> {{ $mode === 'edit' ? __('Edit User') : __('Add User') }}</h1>
+    </div>
+
+    @include('partials.flash')
+
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="card no-border">
+                <div class="content_wrapper content-padded">
+                    <form method="POST" action="{{ $mode === 'edit' ? route('users.update', $user) : route('users.store') }}">
+                        @csrf
+                        @if($mode === 'edit')
+                            @method('PUT')
+                        @endif
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Name') }}</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name ?? '') }}" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Email') }}</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email', $user->email ?? '') }}" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Phone') }}</label>
+                                <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone ?? '') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Status') }}</label>
+                                <select name="account_status" class="form-control" required>
+                                    @php($selectedStatus = old('account_status', $user->account_status ?? 'active'))
+                                    @foreach($statuses as $status)
+                                        <option value="{{ $status }}" {{ $selectedStatus === $status ? 'selected' : '' }}>{{ __(ucfirst(str_replace('_', ' ', $status))) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label>{{ $mode === 'edit' ? __('New Password (Optional)') : __('Password (Optional)') }}</label>
+                                <input type="password" name="password" class="form-control">
+                                @if($mode === 'create')
+                                    <small class="text-muted">{{ __('If blank, a secure password will be auto-generated and sent by email.') }}</small>
+                                @endif
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ $mode === 'edit' ? __('Confirm New Password') : __('Confirm Password') }}</label>
+                                <input type="password" name="password_confirmation" class="form-control">
+                            </div>
+
+                            <div class="col-md-12 form-group">
+                                <label>{{ __('Assign Roles') }}</label>
+                                @php($assignedRoleIds = collect(old('role_ids', isset($user) ? $user->roles->pluck('id')->all() : []))->map(fn($id) => (int) $id)->all())
+                                <div class="row">
+                                    @foreach($roles as $role)
+                                        <div class="col-md-3 mb-2">
+                                            @php($checkboxId = 'role_'.$role->id)
+                                            <div class="checkbox checkbox-default">
+                                                <input id="{{ $checkboxId }}" type="checkbox" name="role_ids[]" value="{{ $role->id }}" {{ in_array($role->id, $assignedRoleIds, true) ? 'checked' : '' }}>
+                                                <label for="{{ $checkboxId }}">{{ $role->name }}</label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-custom" type="submit">
+                            <i class="{{ $mode === 'edit' ? 'icon-check' : 'icon-user-follow' }}"></i>
+                            {{ $mode === 'edit' ? __('Update User') : __('Create User') }}
+                        </button>
+                        <a href="{{ route('users.index') }}" class="btn btn-custom-default"><i class="icon-arrow-left"></i> {{ __('Back') }}</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
