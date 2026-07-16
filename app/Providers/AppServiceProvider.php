@@ -93,13 +93,14 @@ class AppServiceProvider extends ServiceProvider
                 'canAnnouncementCreate' => $can('announcement.create'),
                 'canAnnouncementPublish' => $can('announcement.publish'),
                 'canAnnouncementApprove' => $can('announcement.approve'),
-                'canAnnouncementMenu' => $canAny(['announcement.view', 'announcement.create', 'announcement.publish', 'announcement.approve']),
+                'canAnnouncementMenu' => $user !== null,
                 'canLeaveView' => $can('leave.view'),
                 'canLeaveApply' => $can('leave.apply'),
                 'canLeaveApprove' => $can('leave.approve'),
                 'canLeaveManageCategories' => $can('leave.manage-categories'),
                 'canLeaveManageQuotas' => $canAny(['leave.manage-quotas', 'leave.manage-balances']),
                 'canLeaveReport' => $can('leave.report'),
+                'canLeaveRoster' => $canAny(['leave.approve', 'leave.report', 'leave.manage-balances', 'leave.view']),
                 'canTeamView' => $can('team.view'),
                 'canTeamCreate' => $can('team.create'),
                 'canTeamUpdate' => $can('team.update'),
@@ -248,39 +249,36 @@ class AppServiceProvider extends ServiceProvider
                 });
         }
 
-        if ($user->hasAnyPermission(['announcement.view', 'announcement.create', 'announcement.publish', 'announcement.approve'])) {
-            Announcement::query()
-                ->where('approval_status', 'approved')
-                ->whereNotNull('publish_at')
-                ->where('is_active', true)
-                ->where(function ($query): void {
-                    $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
-                })
-                ->where(function ($query) use ($employee): void {
-                    $query->where('audience_type', 'all');
+        Announcement::query()
+            ->where('approval_status', 'approved')
+            ->whereNotNull('publish_at')
+            ->where('is_active', true)
+            ->where(function ($query): void {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->where(function ($query) use ($employee): void {
+                $query->where('audience_type', 'all');
 
-                    if ($employee) {
-                        $query->orWhere(function ($employeeQuery) use ($employee): void {
-                            $employeeQuery
-                                ->where('audience_type', 'employees')
-                                ->whereJsonContains('audience_employee_ids', (int) $employee->id);
-                        });
-                    }
-                })
-                ->latest('publish_at')
-                ->limit(5)
-                ->get()
-                ->each(function (Announcement $announcement) use ($items, $user): void {
-                    $canOpen = $user->hasAnyPermission(['announcement.view', 'announcement.create', 'announcement.publish', 'announcement.approve']);
-                    $items->push([
-                        'title' => $announcement->announcement_type === 'notice' ? 'Notice' : 'Announcement',
-                        'message' => (string) $announcement->title,
-                        'time' => $announcement->publish_at?->diffForHumans() ?? 'Published',
-                        'url' => $canOpen ? route('announcements.show', $announcement) : '#',
-                        'icon' => $announcement->announcement_type === 'notice' ? 'icon-bell' : 'icon-doc',
-                    ]);
-                });
-        }
+                if ($employee) {
+                    $query->orWhere(function ($employeeQuery) use ($employee): void {
+                        $employeeQuery
+                            ->where('audience_type', 'employees')
+                            ->whereJsonContains('audience_employee_ids', (int) $employee->id);
+                    });
+                }
+            })
+            ->latest('publish_at')
+            ->limit(5)
+            ->get()
+            ->each(function (Announcement $announcement) use ($items): void {
+                $items->push([
+                    'title' => $announcement->announcement_type === 'notice' ? 'Notice' : 'Announcement',
+                    'message' => (string) $announcement->title,
+                    'time' => $announcement->publish_at?->diffForHumans() ?? 'Published',
+                    'url' => route('announcements.show', $announcement),
+                    'icon' => $announcement->announcement_type === 'notice' ? 'icon-bell' : 'icon-doc',
+                ]);
+            });
 
         if ($user->hasAnyPermission(['leave.approve', 'leave.view', 'leave.apply'])) {
             LeaveApplication::query()

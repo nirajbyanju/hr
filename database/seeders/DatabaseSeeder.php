@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SystemSettingsSeeder::class,
             AdminUserSeeder::class,
+            LeavePolicySeeder::class,
         ]);
     }
 }

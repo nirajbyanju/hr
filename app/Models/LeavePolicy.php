@@ -22,6 +22,7 @@ class LeavePolicy extends Model
             'days_allocated' => 'decimal:2',
             'carry_forward_limit' => 'decimal:2',
             'earned_credit_days' => 'decimal:2',
+            'accrual_cap' => 'decimal:2',
             'is_prorated' => 'boolean',
             'is_earned_leave' => 'boolean',
             'is_active' => 'boolean',

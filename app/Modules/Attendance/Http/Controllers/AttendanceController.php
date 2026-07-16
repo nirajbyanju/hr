@@ -46,13 +46,21 @@ class AttendanceController extends Controller
             $filters['employee_id'] = 0;
         }
 
+        $currentEmployeeId = $user->employee?->id;
+        $canEditAttendanceDateTime = $this->canEditAttendanceDateTime($user);
+        $nextEntryType = $currentEmployeeId
+            ? $this->attendanceService->determineNextEntryType((int) $currentEmployeeId, now()->format('Y-m-d'))
+            : 'checkin';
+
         return view('hr.attendance.index', [
             'attendanceRows' => $this->attendanceRepository->paginateSummary($filters, $scopedEmployeeIds),
             'employees' => $this->attendanceRepository->listEmployeesForScope($scopedEmployeeIds),
             'filters' => $filters,
             'canManageAttendance' => $user->hasPermission('attendance.manage'),
+            'canEditAttendanceDateTime' => $canEditAttendanceDateTime,
             'canAttendanceApiIntegration' => $user->hasAnyPermission(['attendance.api-integration', 'attendance.manage']),
-            'currentEmployeeId' => $user->employee?->id,
+            'currentEmployeeId' => $currentEmployeeId,
+            'nextEntryType' => $nextEntryType,
             'hasAllAccess' => $hasAllAccess,
         ]);
     }
@@ -64,6 +72,12 @@ class AttendanceController extends Controller
         $hasAllAccess = $this->hasAllAccess($user);
         $validated = $request->validated();
 
+        if (! $this->canEditAttendanceDateTime($user)) {
+            $now = now();
+            $validated['attendance_date'] = $now->format('Y-m-d');
+            $validated['entry_time'] = $now->format('h:i A');
+        }
+
         $employeeId = (int) ($validated['employee_id'] ?? 0);
         if (! $hasAllAccess) {
             $employeeId = (int) ($user->employee?->id ?? 0);
@@ -73,9 +87,23 @@ class AttendanceController extends Controller
             return back()->withErrors(['employee_id' => 'No employee profile is linked to your account.'])->withInput();
         }
 
+        // Admins with attendance.manage may pick the entry type explicitly (for corrections).
+        // Self-service employees never choose it: the server determines the next action from
+        // the day's existing entries, which also prevents tampering with the submitted value.
+        $canManage = $user->hasPermission('attendance.manage');
+        $entryType = $canManage ? ($validated['entry_type'] ?? null) : null;
+        if (! in_array($entryType, ['checkin', 'checkout'], true)) {
+            $entryType = $this->attendanceService->determineNextEntryType($employeeId, (string) $validated['attendance_date']);
+        }
+        $validated['entry_type'] = $entryType;
+
         $this->attendanceService->addManualLog($employeeId, $validated, $user->id);
 
-        return redirect()->route('attendance.index')->with('success', __('Attendance log added successfully.'));
+        $message = $entryType === 'checkout'
+            ? __('Check-out recorded successfully.')
+            : __('Check-in recorded successfully.');
+
+        return redirect()->route('attendance.index')->with('success', $message);
     }
 
     // Export attendance logs as a CSV file based on filters and user access scope.
@@ -405,6 +433,11 @@ class AttendanceController extends Controller
     private function hasAllAccess(User $user): bool
     {
         return $user->hasAnyPermission(['attendance.manage', 'attendance.report', 'attendance.import']);
+    }
+
+    private function canEditAttendanceDateTime(User $user): bool
+    {
+        return $user->hasAnyRole(['super-admin', 'admin', 'hr-admin', 'hr-manager']);
     }
 
     private function normalizeEntryType(string $value): string

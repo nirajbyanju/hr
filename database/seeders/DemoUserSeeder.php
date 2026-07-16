@@ -135,6 +135,13 @@ class DemoUserSeeder extends Seeder
 
         $roles['department-head']->permissions()->sync(
             Permission::query()
+                // leave.manage-balances/manage-quotas/manage-categories are HR-configuration
+                // permissions (accrual rates, policy setup) that happen to share the broad
+                // 'general' access_scope with many day-to-day permissions. A department head
+                // is a stage-one leave approver (leave.approve, granted explicitly below), not
+                // an HR administrator, so these must stay excluded even though the scope-based
+                // clause below would otherwise sweep them in.
+                ->whereNotIn('slug', ['leave.manage-balances', 'leave.manage-quotas', 'leave.manage-categories'])
                 ->whereIn('access_scope', ['team', 'self', 'general'])
                 ->orWhereIn('slug', [
                     'dashboard.view',

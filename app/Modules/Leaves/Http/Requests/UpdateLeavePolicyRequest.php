@@ -43,6 +43,7 @@ class UpdateLeavePolicyRequest extends FormRequest
             'is_earned_leave' => ['required', 'boolean'],
             'earned_credit_frequency' => ['nullable', 'in:monthly,yearly', 'required_if:is_earned_leave,1'],
             'earned_credit_days' => ['nullable', 'numeric', 'min:0', 'max:31', 'required_if:is_earned_leave,1'],
+            'accrual_cap' => ['nullable', 'numeric', 'min:0', 'max:9999'],
             'is_active' => ['required', 'boolean'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];

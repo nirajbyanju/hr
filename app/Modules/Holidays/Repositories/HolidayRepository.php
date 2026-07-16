@@ -5,6 +5,7 @@ namespace App\Modules\Holidays\Repositories;
 use App\Models\Holiday;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class HolidayRepository
 {
@@ -14,7 +15,7 @@ class HolidayRepository
     public function availableYears(): array
     {
         return Holiday::query()
-            ->selectRaw('YEAR(holiday_date) as year')
+            ->selectRaw("{$this->yearExpression('holiday_date')} as year")
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year')
@@ -22,6 +23,15 @@ class HolidayRepository
             ->filter(fn (int $year): bool => $year > 0)
             ->values()
             ->all();
+    }
+
+    private function yearExpression(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%Y', {$column})",
+            'pgsql' => "date_part('year', {$column})",
+            default => "YEAR({$column})",
+        };
     }
 
     public function paginateCurrentYear(int $year, int $perPage = 20): LengthAwarePaginator

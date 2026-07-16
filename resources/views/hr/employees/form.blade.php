@@ -169,6 +169,7 @@
                                                 <option value="{{ $manager->id }}" {{ (string)$selectedManager === (string)$manager->id ? 'selected' : '' }}>{{ trim($manager->first_name.' '.$manager->last_name) }} ({{ $manager->employee_code }})</option>
                                             @endforeach
                                         </select>
+                                        <small class="text-muted">{{ __('This person also approves this employee\'s leave requests (stage 1, before HR final approval).') }}</small>
                                     </div>
                             <div class="col-md-6 form-group mb-3">
                                 <label>{{ __('Marital Status') }}</label>

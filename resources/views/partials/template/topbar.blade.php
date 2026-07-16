@@ -9,14 +9,12 @@
         $notificationPayload = $topbarNotifications ?? ['items' => [], 'count' => 0];
         $notificationItems = collect($notificationPayload['items'] ?? []);
         $notificationCount = (int) ($notificationPayload['count'] ?? $notificationItems->count());
-        $supportedLocales = config('locales.supported', []);
-        $currentLocale = app()->getLocale();
     @endphp
     <nav class="navbar navbar-light app-topbar-nav">
         <div class="app-topbar-left">
             <div class="logo-container app-logo-container">
                 <a class="navbar-brand text-start app-logo-link" href="{{ route('dashboard') }}">
-                    <img class="app-logo-img" src="{{ asset(config('madpos_ui.logo')) }}" alt="Zerithon">
+                    <img class="app-logo-img" src="{{ asset(config('madpos_ui.logo')) }}" alt="SamriddhiHR">
                 </a>
             </div>
 
@@ -62,17 +60,6 @@
                                     @endforelse
                                 </div>
                             </div>
-                        </li>
-
-                        <li class="d-none d-md-block app-lang-item">
-                            <form method="POST" action="{{ route('locale.update') }}">
-                                @csrf
-                                <select name="locale" class="form-control" onchange="this.form.submit()" aria-label="{{ __('Language') }}">
-                                    @foreach($supportedLocales as $localeCode => $localeLabel)
-                                        <option value="{{ $localeCode }}" {{ $currentLocale === $localeCode ? 'selected' : '' }}>{{ __($localeLabel) }}</option>
-                                    @endforeach
-                                </select>
-                            </form>
                         </li>
 
                         <li class="dropdown topbar-user-menu">

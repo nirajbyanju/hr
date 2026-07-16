@@ -13,8 +13,13 @@ return new class extends Migration
             return;
         }
 
+        // Use Laravel's schema builder so the correct DROP statement is generated per
+        // driver. A raw "ALTER TABLE ... DROP INDEX" is MySQL-only and silently fails
+        // on SQLite, which would leave the unique index in place.
         try {
-            DB::statement('ALTER TABLE attendance_logs DROP INDEX attendance_logs_employee_id_attendance_date_unique');
+            Schema::table('attendance_logs', function (Blueprint $table): void {
+                $table->dropUnique('attendance_logs_employee_id_attendance_date_unique');
+            });
         } catch (\Throwable) {
             // Ignore if index already removed.
         }

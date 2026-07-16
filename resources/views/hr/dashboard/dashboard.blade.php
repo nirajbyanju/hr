@@ -178,7 +178,7 @@
                         </div>
 
                         <div class="col-lg-6">
-                            @if($can('dashboard.upcoming_events_table'))
+                            @if($can('dashboard.upcoming_events_table') || ($canViewHolidays ?? false))
                                 <div class="dashboard-panel">
                                     <div class="dashboard-panel-header">
                                         <div>
@@ -207,7 +207,7 @@
 
                 <div class="col-xl-4">
                     <div class="dashboard-side-stack">
-                        @if($can('dashboard.notice_board'))
+                        @if($can('dashboard.notice_board') || ($canViewAnnouncements ?? false))
                             <div class="dashboard-panel">
                                 <div class="dashboard-panel-header">
                                     <div>

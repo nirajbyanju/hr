@@ -36,18 +36,6 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-Route::post('/locale', function () {
-    $locale = (string) request()->input('locale', config('app.locale', 'en'));
-
-    if (! array_key_exists($locale, config('locales.supported', []))) {
-        $locale = config('app.locale', 'en');
-    }
-
-    session(['locale' => $locale]);
-
-    return back();
-})->name('locale.update');
-
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
@@ -112,10 +100,10 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
     });
 
     Route::prefix('announcements')->name('announcements.')->group(function (): void {
-        Route::get('/', [AnnouncementController::class, 'index'])->middleware('permission:announcement.view,announcement.create,announcement.publish,announcement.approve')->name('index');
+        Route::get('/', [AnnouncementController::class, 'index'])->name('index');
         Route::get('/create', [AnnouncementController::class, 'create'])->middleware('permission:announcement.create')->name('create');
         Route::post('/', [AnnouncementController::class, 'store'])->middleware('permission:announcement.create')->name('store');
-        Route::get('/{announcement}', [AnnouncementController::class, 'show'])->middleware('permission:announcement.view,announcement.create,announcement.publish,announcement.approve')->name('show');
+        Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('show');
         Route::post('/{announcement}/approve', [AnnouncementController::class, 'approve'])->middleware('permission:announcement.approve')->name('approve');
         Route::post('/{announcement}/publish', [AnnouncementController::class, 'publish'])->middleware('permission:announcement.publish')->name('publish');
     });
@@ -127,6 +115,10 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
     Route::prefix('leave/applications')->name('leave-applications.')->group(function (): void {
         Route::get('/', [LeaveApplicationController::class, 'applyIndex'])->middleware('permission:leave.apply,leave.view')->name('index');
         Route::post('/', [LeaveApplicationController::class, 'store'])->middleware('permission:leave.apply')->name('store');
+    });
+
+    Route::prefix('leave/on-leave')->name('leave-on-leave.')->group(function (): void {
+        Route::get('/', [LeaveApplicationController::class, 'onLeaveIndex'])->middleware('permission:leave.approve,leave.report,leave.manage-balances,leave.view')->name('index');
     });
 
     Route::prefix('leave/approvals')->name('leave-approvals.')->group(function (): void {

@@ -115,6 +115,11 @@
                                 <input type="number" step="0.01" min="0" max="31" name="earned_credit_days" class="form-control" value="{{ old('earned_credit_days', $leavePolicy->earned_credit_days ?? '0') }}">
                             </div>
 
+                            <div class="col-md-4 form-group mb-3 earned-leave-group">
+                                <label>{{ __('Accrual Cap (max balance)') }}</label>
+                                <input type="number" step="0.01" min="0" max="9999" name="accrual_cap" class="form-control" value="{{ old('accrual_cap', $leavePolicy->accrual_cap ?? '') }}" placeholder="{{ __('e.g. 90 (leave blank for no cap)') }}">
+                            </div>
+
                             <div class="col-md-12 form-group mb-3">
                                 <label>{{ __('Notes') }}</label>
                                 <textarea name="notes" class="form-control" rows="3">{{ old('notes', $leavePolicy->notes ?? '') }}</textarea>

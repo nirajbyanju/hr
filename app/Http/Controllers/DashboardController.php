@@ -28,6 +28,10 @@ class DashboardController extends Controller
         $user = $request->user();
         $employee = $user?->employee;
         $permissions = $this->dashboardPermissions($user);
+        $canViewHolidays = $user?->hasPermission('holiday.view') ?? false;
+        // Published notices are employee communications. Every signed-in employee
+        // may view notices addressed to everyone or specifically to them.
+        $canViewAnnouncements = $user !== null;
         $scope = $this->dashboardScope($user);
         $scopedEmployeeIds = $this->scopedEmployeeIds($scope, $employee);
         $today = CarbonImmutable::today();
@@ -62,7 +66,7 @@ class DashboardController extends Controller
             ->whereDate('holiday_date', '<=', $today->addDays(45))
             ->count();
         $upcomingBirthdays = $this->upcomingBirthdaysQuery($today, $scopedEmployeeIds)->count();
-        $latestAnnouncements = ($permissions['dashboard.notice_board'] ?? false)
+        $latestAnnouncements = $canViewAnnouncements
             ? $this->announcementRepository->latestPublished(8, $user)
             : collect();
 
@@ -106,9 +110,10 @@ class DashboardController extends Controller
             'todayAttendanceRows' => $this->todayAttendanceRows($today, $scopedEmployeeIds, $scope === 'self' ? $selfEmployeeId : null),
             'pendingLeaveRows' => $this->pendingLeaveRows($scopedEmployeeIds, $scope === 'self' ? $selfEmployeeId : null),
             'upcomingEvents' => $this->upcomingEvents($today, $scopedEmployeeIds),
+            'canViewHolidays' => $canViewHolidays,
             'basicAlerts' => $this->basicAlerts($absentToday, $pendingLeaveRequests, $today, $scopedEmployeeIds, $scope),
             'latestAnnouncements' => $latestAnnouncements,
-            'canViewAnnouncements' => $user?->hasAnyPermission(['announcement.view', 'announcement.create', 'announcement.publish', 'announcement.approve']) ?? false,
+            'canViewAnnouncements' => $canViewAnnouncements,
             'canCreateAnnouncement' => $user?->hasPermission('announcement.create') ?? false,
             'canViewPrivateNotes' => ($permissions['dashboard.quick_notes'] ?? false) && ($user?->hasPermission('note.view-private') ?? false),
             'canCreatePrivateNotes' => ($permissions['dashboard.quick_notes'] ?? false) && ($user?->hasPermission('note.create-private') ?? false),
@@ -278,22 +283,32 @@ class DashboardController extends Controller
     {
         $todayMonthDay = $today->format('m-d');
         $endMonthDay = $today->addDays(45)->format('m-d');
+        $monthDayExpression = $this->monthDayExpression('date_of_birth');
 
         return Employee::query()
             ->with('department')
             ->whereNotNull('date_of_birth')
             ->where('employment_status', 'active')
             ->when($scopedEmployeeIds !== null, fn ($query) => $query->whereIn('id', $scopedEmployeeIds))
-            ->where(function ($query) use ($todayMonthDay, $endMonthDay): void {
+            ->where(function ($query) use ($monthDayExpression, $todayMonthDay, $endMonthDay): void {
                 if ($todayMonthDay <= $endMonthDay) {
-                    $query->whereRaw("DATE_FORMAT(date_of_birth, '%m-%d') BETWEEN ? AND ?", [$todayMonthDay, $endMonthDay]);
+                    $query->whereRaw("{$monthDayExpression} BETWEEN ? AND ?", [$todayMonthDay, $endMonthDay]);
                     return;
                 }
 
-                $query->whereRaw("DATE_FORMAT(date_of_birth, '%m-%d') >= ?", [$todayMonthDay])
-                    ->orWhereRaw("DATE_FORMAT(date_of_birth, '%m-%d') <= ?", [$endMonthDay]);
+                $query->whereRaw("{$monthDayExpression} >= ?", [$todayMonthDay])
+                    ->orWhereRaw("{$monthDayExpression} <= ?", [$endMonthDay]);
             })
-            ->orderByRaw("DATE_FORMAT(date_of_birth, '%m-%d')");
+            ->orderByRaw($monthDayExpression);
+    }
+
+    private function monthDayExpression(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%m-%d', {$column})",
+            'pgsql' => "to_char({$column}, 'MM-DD')",
+            default => "DATE_FORMAT({$column}, '%m-%d')",
+        };
     }
 
     private function basicAlerts(int $absentToday, int $pendingLeaveRequests, CarbonImmutable $today, ?array $scopedEmployeeIds, string $scope): array

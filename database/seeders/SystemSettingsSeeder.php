@@ -13,8 +13,8 @@ class SystemSettingsSeeder extends Seeder
     public function run(): void
     {
         $defaults = [
-            'app_name' => ['value' => 'ZerithonHR', 'group_name' => 'general'],
-            'company_name' => ['value' => 'ZerithonLabs', 'group_name' => 'company'],
+            'app_name' => ['value' => 'SamriddhiHR', 'group_name' => 'general'],
+            'company_name' => ['value' => 'SamriddhiHR', 'group_name' => 'company'],
             'currency_prefix' => ['value' => '৳', 'group_name' => 'localization'],
             'employee_code_prefix' => ['value' => 'EMP', 'group_name' => 'localization'],
             'invoice_prefix' => ['value' => 'INV', 'group_name' => 'localization'],

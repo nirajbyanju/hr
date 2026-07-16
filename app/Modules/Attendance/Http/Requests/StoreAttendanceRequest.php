@@ -7,6 +7,20 @@ use Illuminate\Support\Carbon;
 
 class StoreAttendanceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $user = $this->user();
+        $canEditAttendanceDateTime = $user?->hasAnyRole(['super-admin', 'admin', 'hr-admin', 'hr-manager']) ?? false;
+
+        if (! $canEditAttendanceDateTime) {
+            $now = now();
+            $this->merge([
+                'attendance_date' => $now->format('Y-m-d'),
+                'entry_time' => $now->format('h:i A'),
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -20,7 +34,7 @@ class StoreAttendanceRequest extends FormRequest
         return [
             'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
             'attendance_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'entry_type' => ['required', 'string', 'in:checkin,checkout'],
+            'entry_type' => ['nullable', 'string', 'in:checkin,checkout'],
             'entry_time' => ['required', 'string', 'max:20'],
             'remarks' => ['nullable', 'string', 'max:1000'],
         ];
