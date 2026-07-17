@@ -18,7 +18,7 @@
                     <div class="row g-2 mb-3">
                         @foreach($balances as $balance)
                             <div class="col-6 col-md-3 col-lg-2">
-                                <div class="">
+                                <div>
                                     <div class="content_wrapper p-3 text-center">
                                         <div class="text-muted" style="font-size:12px;">{{ $balance->leaveCategory?->name ?? '-' }}</div>
                                         <div style="font-size:22px; font-weight:700;">{{ number_format((float) $balance->closing_balance, 2) }}</div>
@@ -36,7 +36,7 @@
                     <div class="alert alert-warning">{{ __('No direct supervisor is set on your profile — your request will be routed to HR for approval.') }}</div>
                 @endif
 
-                <div class="card no-border mb-3">
+                <div class="mb-3">
                     <div class="content_wrapper content-padded">
                             <h5 class="table_banner_title mb-3">{{ __('New Leave Request') }}</h5>
                         <form method="POST" action="{{ route('leave-applications.store') }}" class="row g-2">
@@ -88,7 +88,7 @@
                     </div>
                 </div>
             @endif
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('My Leave Requests') }}</h5>
                     <div class="table-responsive">

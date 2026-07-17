@@ -11,7 +11,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border mb-3">
+            <div class="mb-3">
                 <div class="content_wrapper content-padded">
                     <div class="row g-3">
                         <div class="col-md-2"><strong>{{ __('Present:') }}</strong> {{ $summary['present'] }}</div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="GET" class="row g-2 mb-3">
                         <div class="col-md-3"><select name="employee_id" class="form-control js-example-basic-single"><option value="0">{{ __('All Employees') }}</option>@foreach($employees as $employee)<option value="{{ $employee->id }}" {{ (int)$filters['employee_id']===$employee->id?'selected':'' }}>{{ trim($employee->first_name.' '.$employee->last_name) }} ({{ $employee->employee_code }})</option>@endforeach</select></div>

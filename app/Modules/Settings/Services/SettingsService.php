@@ -76,6 +76,8 @@ class SettingsService
             'company_email' => ['group_name' => 'company'],
             'company_phone' => ['group_name' => 'company'],
             'company_address' => ['group_name' => 'company', 'type' => 'text'],
+            'primary_color' => ['group_name' => 'branding'],
+            'secondary_color' => ['group_name' => 'branding'],
             'currency_prefix' => ['group_name' => 'localization'],
             'employee_code_prefix' => ['group_name' => 'localization'],
             'invoice_prefix' => ['group_name' => 'localization'],

@@ -14,7 +14,7 @@
             @if(! $employee)
                 <div class="alert alert-danger">{{ __('Your account is not linked with an employee profile.') }}</div>
             @else
-                <div class="card no-border mb-3">
+                <div class="mb-3">
                     <div class="content_wrapper content-padded">
                         <h5 class="table_banner_title mb-3">{{ __('Submit Resignation Request') }}</h5>
                         <form method="POST" action="{{ route('employee-resignations.store') }}" class="row g-2">
@@ -44,7 +44,7 @@
             @endif
 
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Resignation Requests') }}</h5>
                     <div class="table-responsive">

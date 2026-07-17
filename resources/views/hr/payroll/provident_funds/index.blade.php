@@ -6,7 +6,7 @@
     @include('partials.flash')
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     @if($canManageProvidentFund ?? false)
                         <form method="POST" action="{{ route('payroll.provident-funds.store') }}" class="row g-2 mb-4">

@@ -39,7 +39,7 @@
 
     <div class="page-content"><div class="container-fluid"><div class="row g-3">
         <div class="col-md-7">
-            <div class="card no-border"><div class="content_wrapper content-padded">
+            <div><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Task Summary') }}</h5>
                 <div class="row">
                     <div class="col-md-6"><p><strong>{{ __('Project:') }}</strong> {{ $task->project?->name ?? '-' }}</p></div>
@@ -69,7 +69,7 @@
                 @endif
             </div></div>
 
-            <div class="card no-border mt-3"><div class="content_wrapper content-padded">
+            <div class="mt-3"><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Assignments') }}</h5>
                 @forelse($task->assignments as $assignment)
                     @php($isMine = $myAssignment && $myAssignment->id === $assignment->id)
@@ -139,7 +139,7 @@
                 @endif
             </div></div>
 
-            <div class="card no-border mt-3"><div class="content_wrapper content-padded">
+            <div class="mt-3"><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Checklist') }}</h5>
                 @forelse($task->checklists as $checklist)
                     <div class="mb-3">
@@ -184,7 +184,7 @@
                 @endif
             </div></div>
 
-            <div class="card no-border mt-3"><div class="content_wrapper content-padded">
+            <div class="mt-3"><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Dependencies') }}</h5>
                 <p><strong>{{ __('Depends on:') }}</strong></p>
                 <ul>
@@ -220,7 +220,7 @@
         </div>
 
         <div class="col-md-5">
-            <div class="card no-border"><div class="content_wrapper content-padded">
+            <div><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Attachments') }}</h5>
                 @forelse($task->attachments as $attachment)
                     <div class="d-flex justify-content-between align-items-center border-bottom py-1">
@@ -253,7 +253,7 @@
                 @endif
             </div></div>
 
-            <div class="card no-border mt-3"><div class="content_wrapper content-padded">
+            <div class="mt-3"><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Comments') }}</h5>
                 <div class="scroll-panel-sm">
                     @forelse($task->comments as $comment)
@@ -310,7 +310,7 @@
                 @endif
             </div></div>
 
-            <div class="card no-border mt-3"><div class="content_wrapper content-padded">
+            <div class="mt-3"><div class="content_wrapper content-padded">
                 <h5 class="table_banner_title mb-3">{{ __('Activity Timeline') }}</h5>
                 <div class="scroll-panel-sm">
                     @forelse($task->activityLogs as $log)

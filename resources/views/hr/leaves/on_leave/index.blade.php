@@ -11,7 +11,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border mb-3">
+            <div class="mb-3">
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('On Leave Today') }} <small class="text-muted">({{ $today }})</small></h5>
                     <div class="table-responsive">
@@ -46,7 +46,7 @@
                 </div>
             </div>
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Upcoming Leave') }}</h5>
                     <div class="table-responsive">

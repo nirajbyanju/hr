@@ -11,7 +11,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border mb-3">
+            <div class="mb-3">
                 <div class="content_wrapper content-padded">
                     <div class="row g-3">
                         <div class="col-md-3"><strong>{{ __('Total:') }}</strong> {{ $summary['total'] }}</div>
@@ -22,7 +22,7 @@
                 </div>
             </div>
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="GET" class="row g-2 mb-3">
                         <div class="col-md-3"><input type="text" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="{{ __('Search employee') }}"></div>

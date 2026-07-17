@@ -16,7 +16,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         <form method="GET" class="row g-2 mb-3">
             <div class="col-md-2"><input type="text" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="{{ __('Search #, title, description') }}"></div>
             <div class="col-md-2"><select name="project_id" class="form-control"><option value="0">{{ __('All Projects') }}</option>@foreach($projects as $project)<option value="{{ $project->id }}" {{ (int)$filters['project_id']===(int)$project->id?'selected':'' }}>{{ $project->name }}</option>@endforeach</select></div>

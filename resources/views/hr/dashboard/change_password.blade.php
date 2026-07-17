@@ -10,7 +10,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded-narrow">
                     <form method="POST" action="{{ route('dashboard.password.update') }}">
                         @csrf

@@ -10,7 +10,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <div class="mb-3">
                         <strong>{{ $user->name }}</strong><br>

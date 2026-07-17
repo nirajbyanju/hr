@@ -10,7 +10,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data">
                         @csrf
@@ -68,6 +68,27 @@
                                         <div class="mt-2"><img src="{{ asset($settings['company_favicon']) }}" alt="Favicon" class="settings-favicon-preview"></div>
                                     @endif
                                 </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h5 class="table_banner_title mb-3">{{ __('Appearance') }}</h5>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Primary Color') }}</label>
+                                <div class="color-field-row">
+                                    <input type="color" class="color-swatch-input" id="primary_color_picker" value="{{ old('primary_color', $settings['primary_color'] ?? '#0f8f8c') }}">
+                                    <input type="text" class="form-control color-hex-input" id="primary_color" name="primary_color" value="{{ old('primary_color', $settings['primary_color'] ?? '#0f8f8c') }}" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$">
+                                </div>
+                                <small class="text-muted">{{ __('Buttons, links and highlighted actions.') }}</small>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Secondary Color') }}</label>
+                                <div class="color-field-row">
+                                    <input type="color" class="color-swatch-input" id="secondary_color_picker" value="{{ old('secondary_color', $settings['secondary_color'] ?? '#25364d') }}">
+                                    <input type="text" class="form-control color-hex-input" id="secondary_color" name="secondary_color" value="{{ old('secondary_color', $settings['secondary_color'] ?? '#25364d') }}" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$">
+                                </div>
+                                <small class="text-muted">{{ __('Sidebar and dark surface tone.') }}</small>
                             </div>
                         </div>
 
@@ -194,6 +215,32 @@
 
         bindFileName('company_logo', 'company_logo_name');
         bindFileName('company_favicon', 'company_favicon_name');
+
+        var HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+
+        function bindColorField(pickerId, hexId, cssVar) {
+            var picker = document.getElementById(pickerId);
+            var hex = document.getElementById(hexId);
+            if (!picker || !hex) {
+                return;
+            }
+
+            picker.addEventListener('input', function () {
+                hex.value = picker.value;
+                document.documentElement.style.setProperty(cssVar, picker.value);
+            });
+
+            hex.addEventListener('input', function () {
+                var value = hex.value.trim();
+                if (HEX_RE.test(value)) {
+                    picker.value = value;
+                    document.documentElement.style.setProperty(cssVar, value);
+                }
+            });
+        }
+
+        bindColorField('primary_color_picker', 'primary_color', '--hr-accent');
+        bindColorField('secondary_color_picker', 'secondary_color', '--hr-primary');
     })();
 </script>
 @endpush

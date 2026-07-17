@@ -102,7 +102,7 @@
             </div>
 
             @if($canManageAttendance && $hasAllAccess)
-                <div class="card no-border mb-3">
+                <div class="mb-3">
                     <div class="content_wrapper content-padded">
                         <h5 class="table_banner_title mb-3">{{ __('Excel Import (CSV)') }}</h5>
                         <form method="POST" action="{{ route('attendance.import') }}" enctype="multipart/form-data" class="row g-2">
@@ -124,7 +124,7 @@
                 </div>
             @endif
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Attendance History') }}</h5>
 

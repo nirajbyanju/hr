@@ -14,7 +14,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <div class="employee-profile-avatar">

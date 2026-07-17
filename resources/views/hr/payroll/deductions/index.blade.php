@@ -6,7 +6,7 @@
     @include('partials.flash')
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     @if($canManageDeductions ?? false)
                         <form method="POST" action="{{ route('payroll.deductions.store') }}" class="row g-2 mb-4">

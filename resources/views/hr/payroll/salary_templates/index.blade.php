@@ -21,7 +21,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="GET" class="row g-2 mb-3">
                         <div class="col-md-5"><input type="text" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="{{ __('Search template name or code') }}"></div>

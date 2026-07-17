@@ -38,7 +38,7 @@
         <div class="row g-3 mb-3">
             @foreach($bucketLabels as $key => $label)
                 <div class="col-md-3 col-sm-6">
-                    <div class="card no-border"><div class="content_wrapper content-padded text-center">
+                    <div><div class="content_wrapper content-padded text-center">
                         <span class="badge {{ $bucketColors[$key] }} mb-2">{{ $label }}</span>
                         <h3 class="mb-0">{{ $buckets[$key]->count() }}</h3>
                     </div></div>
@@ -48,7 +48,7 @@
 
         <div class="row g-3">
             <div class="col-md-6">
-                <div class="card no-border"><div class="content_wrapper content-padded">
+                <div><div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Upcoming Deadlines') }}</h5>
                     @forelse($upcomingDeadlines as $assignment)
                         <div class="border-bottom py-1"><a href="{{ route('tasks.show', $assignment->task_id) }}">#{{ $assignment->task_id }} {{ $assignment->task?->title }}</a> <span class="small text-muted">{{ $assignment->task?->due_date }}</span></div>
@@ -58,7 +58,7 @@
                 </div></div>
             </div>
             <div class="col-md-6">
-                <div class="card no-border"><div class="content_wrapper content-padded">
+                <div><div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __("Today's Tasks") }}</h5>
                     @forelse($todaysTasks as $assignment)
                         <div class="border-bottom py-1"><a href="{{ route('tasks.show', $assignment->task_id) }}">#{{ $assignment->task_id }} {{ $assignment->task?->title }}</a></div>
@@ -68,7 +68,7 @@
                 </div></div>
             </div>
             <div class="col-md-6">
-                <div class="card no-border"><div class="content_wrapper content-padded">
+                <div><div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('High Priority') }}</h5>
                     @forelse($highPriority as $assignment)
                         <div class="border-bottom py-1">
@@ -81,7 +81,7 @@
                 </div></div>
             </div>
             <div class="col-md-6">
-                <div class="card no-border"><div class="content_wrapper content-padded">
+                <div><div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Recently Updated') }}</h5>
                     @forelse($recentlyUpdated as $assignment)
                         <div class="border-bottom py-1">

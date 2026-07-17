@@ -13,7 +13,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <div class="notice-page-meta d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                         <div class="notice-meta-chip">
