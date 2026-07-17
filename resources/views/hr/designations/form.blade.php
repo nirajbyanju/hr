@@ -10,7 +10,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="POST" action="{{ $mode === 'edit' ? route('designations.update', $designation) : route('designations.store') }}">
                         @csrf

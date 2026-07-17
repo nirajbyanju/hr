@@ -22,7 +22,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <div class="row g-3 mb-3">
                         <div class="col-md-3"><strong>{{ __('Employee:') }}</strong><br>{{ trim($loan->employee?->first_name.' '.$loan->employee?->last_name) }} ({{ $loan->employee?->employee_code }})</div>

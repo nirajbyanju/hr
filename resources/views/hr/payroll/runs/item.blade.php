@@ -9,7 +9,7 @@
     @include('partials.flash')
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <div class="row g-2 mb-3">
                         <div class="col-md-4"><strong>{{ __('Employee:') }}</strong> {{ trim($item->employee?->first_name.' '.$item->employee?->last_name) }} ({{ $item->employee?->employee_code }})</div>

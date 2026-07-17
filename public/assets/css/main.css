@@ -16,7 +16,7 @@ body {
     font-size: 16px;
     font-weight: 300;
     letter-spacing: 0.8px;
-    color: #2C3E50;
+    color: var(--hr-primary);
     background-color: #fff;
 }
 
@@ -32,7 +32,7 @@ input {
 
 a {
     text-decoration: none !IMPORTANT;
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 14px;
     letter-spacing: 0.8px;
@@ -41,11 +41,11 @@ a {
 
 a:hover,
 a:focus {
-    color: #2C3E50;
+    color: var(--hr-primary);
 }
 
 label {
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 14px;
     letter-spacing: 0.8px;
@@ -101,7 +101,7 @@ h3,
 h4,
 h5,
 h6 {
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-family: "Roboto", sans-serif;
     font-weight: 400;
     letter-spacing: 0.8px;
@@ -949,7 +949,7 @@ li.notification-parent {
     font-size: 16px;
     font-weight: 300;
     line-height: 14px;
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-family: "Roboto", "Helvetica Neue", Helvetica, sans-serif;
 }
 
@@ -1047,7 +1047,7 @@ h3.page_banner_title {
     border: 1px solid #e5e9ec;
     border-radius: 50%;
     transition: all 320ms linear;
-    color: #2C3E50;
+    color: var(--hr-primary);
 }
 
 .action-buttons button {
@@ -1074,21 +1074,21 @@ h3.page_banner_title {
 
 .btn-custom {
     color: #fff;
-    background-color: #2C3E50;
-    border-color: #2C3E50;
+    background-color: var(--hr-primary);
+    border-color: var(--hr-primary);
     border-radius: 0px;
     box-shadow: 0 14px 26px -12px rgba(96, 125, 139, 0.06), 0 4px 23px 0 rgba(0, 0, 0, 0.05), 0 8px 10px -5px rgba(96, 125, 139, 0.06);
 }
 
 .btn-custom-default {
-    background-color: #2C3E50;
+    background-color: var(--hr-primary);
     color: #fff;
 }
 
 .btn-custom:hover, .btn-custom:focus {
     color: #fff;
-    background-color: #2C3E50;
-    border-color: #2C3E50;
+    background-color: var(--hr-primary);
+    border-color: var(--hr-primary);
     box-shadow: 0 14px 26px -12px rgba(96, 125, 139, 0.22), 0 4px 23px 0 rgba(0, 0, 0, 0.12), 0 8px 10px -5px rgba(96, 125, 139, 0.28);
 }
 
@@ -1131,7 +1131,7 @@ input[type="checkbox"]+label:before {
 }
 
 input[type="checkbox"]:checked+label:before {
-    background-color: #2C3E50;
+    background-color: var(--hr-primary);
 }
 
 input[type="checkbox"].no-border:checked+label:before {
@@ -1782,7 +1782,7 @@ li.todo-item input[type="checkbox"]:checked+label {
 }
 
 .product-list li .product-name {
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-weight: 300;
     font-size: 16px;
     margin-left: 15px;
@@ -1954,7 +1954,7 @@ li.todo-item input[type="checkbox"]:checked+label {
 .product-info .related-name {
     font-size: 18px;
     font-weight: 400;
-    color: #2C3E50;
+    color: var(--hr-primary);
     padding: 25px 0;
     position: relative;
 }
@@ -2622,7 +2622,7 @@ table.scroll tbody td, table.scroll thead th {
     --app-surface: #ffffff;
     --app-surface-muted: #f7f9fb;
     --app-border: #e6ebf0;
-    --app-text: #2c3e50;
+    --app-text: var(--hr-primary);
     --app-text-muted: #6b7c93;
     --app-shadow-sm: 0 10px 30px rgba(15, 23, 42, 0.08);
     --app-shadow-md: 0 18px 45px rgba(15, 23, 42, 0.1);
@@ -3389,7 +3389,7 @@ body {
 
     /* Flash message design */
     :root {
-        --app-brand: #2C3E50;
+        --app-brand: var(--hr-primary);
         --app-flash-border: #d9e1ea;
         --app-flash-text: #2b3642;
         --app-flash-muted: #4d5d6c;
@@ -3542,9 +3542,12 @@ body {
 /* Professional HR admin refresh */
 :root {
     --hr-primary: #25364d;
+    --hr-primary-rgb: 37, 54, 77;
     --hr-primary-strong: #1b2a41;
     --hr-accent: #0f8f8c;
+    --hr-accent-rgb: 15, 143, 140;
     --hr-accent-soft: #e7f6f5;
+    --hr-accent-hover: #0b7674;
     --hr-warning: #b7791f;
     --hr-page-bg: #eef3f7;
     --hr-surface: #ffffff;
@@ -3824,7 +3827,7 @@ a:focus {
 
 .sidebar-nav ul li.active a i,
 .sidebar-nav ul li a:hover i {
-    color: #65d5cf;
+    color: color-mix(in srgb, var(--hr-accent) 55%, white);
 }
 
 .sidebar-nav ul li ul {
@@ -3993,7 +3996,7 @@ a:focus {
 .select2-container--default.select2-container--focus .select2-selection--multiple,
 .select2-container--default .select2-selection--single:focus {
     border-color: var(--hr-accent);
-    box-shadow: 0 0 0 .2rem rgba(15, 143, 140, .14);
+    box-shadow: 0 0 0 .2rem rgba(var(--hr-accent-rgb), .14);
 }
 
 .btn,
@@ -4016,8 +4019,8 @@ a:focus {
 .btn-primary:hover,
 .dataTables_wrapper .dt-buttons .btn-primary:hover {
     color: #fff;
-    background: #0b7674;
-    border-color: #0b7674;
+    background: var(--hr-accent-hover);
+    border-color: var(--hr-accent-hover);
 }
 
 .btn-secondary,
@@ -4147,7 +4150,7 @@ a:focus {
 .btn:focus,
 .btn:active,
 .btn-check:focus + .btn {
-    box-shadow: 0 0 0 .2rem rgba(15, 143, 140, .14) !important;
+    box-shadow: 0 0 0 .2rem rgba(var(--hr-accent-rgb), .14) !important;
 }
 
 .btn-primary,
@@ -4166,8 +4169,8 @@ a:focus {
 .btn-custom:hover,
 .btn-webcam .btn-primary:hover {
     color: #fff !important;
-    background-color: #0b7674 !important;
-    border-color: #0b7674 !important;
+    background-color: var(--hr-accent-hover) !important;
+    border-color: var(--hr-accent-hover) !important;
 }
 
 .btn-outline-primary,
@@ -4470,11 +4473,11 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .sidebar-nav > ul > li.active > a {
-    box-shadow: inset 3px 0 0 #65d5cf;
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--hr-accent) 55%, white);
 }
 
 .sidebar-nav ul li ul li.active a {
-    box-shadow: inset 2px 0 0 #65d5cf;
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--hr-accent) 55%, white);
 }
 
 .left-sidebar .slimScrollBar {
@@ -4588,8 +4591,8 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .profile-update-tab-nav .nav-link.active {
-    color: #2C3E50;
-    border-color: #2C3E50;
+    color: var(--hr-primary);
+    border-color: var(--hr-primary);
     background: transparent;
 }
 
@@ -4721,8 +4724,8 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .holiday-tab-nav .nav-link.active {
-    color: #2C3E50;
-    border-color: #2C3E50;
+    color: var(--hr-primary);
+    border-color: var(--hr-primary);
     background: transparent;
 }
 
@@ -4752,7 +4755,7 @@ input[type="file"].form-control:hover::file-selector-button {
 
 .holiday-badge-holiday {
     color: #fff;
-    background: #2C3E50;
+    background: var(--hr-primary);
 }
 
 .holiday-calendar-grid {
@@ -4786,7 +4789,7 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .holiday-calendar-cell.day.has-holiday {
-    border-color: #2C3E50;
+    border-color: var(--hr-primary);
     background: #f3f7fb;
     cursor: pointer;
 }
@@ -4806,7 +4809,7 @@ input[type="file"].form-control:hover::file-selector-button {
     margin-bottom: 4px;
     padding: 2px 6px;
     color: #fff;
-    background: #2C3E50;
+    background: var(--hr-primary);
     border-radius: 999px;
     font-size: 11px;
     line-height: 1.25;
@@ -4828,7 +4831,7 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .holiday-calendar-cell.day.weekend.has-holiday {
-    border-color: #2C3E50;
+    border-color: var(--hr-primary);
     background: linear-gradient(135deg, #f3f7fb 0%, #f3f7fb 55%, #f2f3f5 100%);
 }
 
@@ -4838,7 +4841,7 @@ input[type="file"].form-control:hover::file-selector-button {
 }
 
 .holiday-modal .modal-title {
-    color: #2C3E50;
+    color: var(--hr-primary);
     font-weight: 600;
 }
 
@@ -5117,5 +5120,533 @@ input[type="file"].form-control:hover::file-selector-button {
         display: block;
         width: 100%;
         margin: 6px 0 0;
+    }
+}
+
+/* ==========================================================================
+   2026 Minimalist Modern Refresh
+   Tighter spacing, smaller type scale, softer surfaces — theme colors are
+   driven entirely by the --hr-accent / --hr-primary custom properties above,
+   which are overridden at runtime from Settings > Appearance.
+   ========================================================================== */
+
+:root {
+    --app-sidebar-width: 196px;
+    --hr-radius: 10px;
+    --hr-radius-sm: 8px;
+    --hr-shadow-soft: 0 1px 2px rgba(15, 23, 42, .05), 0 1px 1px rgba(15, 23, 42, .03);
+    --hr-shadow: 0 6px 20px rgba(15, 23, 42, .08);
+}
+
+html {
+    font-size: 87.5%;
+}
+
+body {
+    font-size: 13px;
+}
+
+.wrapper-page {
+    gap: 14px;
+    padding-top: 66px;
+    padding-right: 14px;
+    padding-bottom: 18px;
+}
+
+.page-content {
+    padding: 0 0 0 14px;
+}
+
+.page-title {
+    min-height: 48px;
+    margin: 0 0 0 14px;
+    padding: 10px 16px;
+}
+
+.page-title h1 {
+    font-size: 15px;
+}
+
+.page-title h1 i {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+}
+
+.content_wrapper,
+.card {
+    margin-bottom: 14px;
+}
+
+.card-header,
+.card-footer,
+.table_banner {
+    padding: 10px 14px;
+}
+
+.table_banner_title,
+.card-title,
+.card-header h1,
+.card-header h2,
+.card-header h3,
+.card-header h4,
+.card-header h5,
+.card-header h6 {
+    font-size: 13.5px;
+}
+
+.table_body,
+.card-body {
+    padding: 14px;
+}
+
+.content-padded {
+    padding: 14px;
+}
+
+.content-padded-narrow {
+    padding: 14px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label,
+.col-form-label {
+    margin-bottom: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.form-control,
+.form-select,
+textarea.form-control,
+select.form-control,
+input[type="text"].form-control,
+input[type="email"].form-control,
+input[type="number"].form-control,
+input[type="password"].form-control,
+input[type="date"].form-control,
+input[type="time"].form-control,
+input[type="search"].form-control,
+input[type="tel"].form-control,
+input[type="url"].form-control,
+.input-group .btn,
+.input-group .input-group-text {
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+
+.btn,
+.btn-custom {
+    min-height: 32px;
+    padding: .4rem .75rem;
+    font-size: 12.5px;
+}
+
+.btn-sm {
+    min-height: 26px;
+    padding: 4px 9px;
+}
+
+.table thead th {
+    padding: 8px 10px;
+    font-size: 10.5px;
+}
+
+.table tbody td,
+.table tbody th {
+    padding: 8px 10px;
+    font-size: 12.5px;
+}
+
+/* Topbar */
+.topbar,
+.topbar .app-topbar-nav {
+    min-height: 50px;
+}
+
+.topbar .app-topbar-left,
+.topbar .app-topbar-right,
+.topbar .app-logo-container {
+    height: 50px;
+}
+
+.topbar .app-topbar-left .navbar-nav > li > a,
+.topbar-hold-trigger,
+.topbar .topbar-user-menu > a {
+    width: 32px;
+    height: 32px;
+}
+
+.topbar .user-img img {
+    width: 28px;
+}
+
+/* Sidebar */
+.left-sidebar {
+    padding-top: 50px;
+}
+
+.sidebar-header {
+    padding: 16px 14px 14px;
+}
+
+.sidebar-nav {
+    padding: 8px 8px 18px;
+}
+
+.sidebar-nav > ul > li > a {
+    min-height: 36px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+}
+
+.sidebar-nav > ul > li > a i {
+    width: 18px;
+}
+
+.sidebar-nav ul li ul {
+    padding: 4px 0 4px 26px;
+}
+
+.sidebar-nav ul li ul li a {
+    min-height: 28px;
+    padding: 6px 10px;
+    font-size: 11.5px;
+}
+
+@media (min-width: 768px) {
+    .left-sidebar,
+    .wrapper-page,
+    .topbar .app-logo-container {
+        transition: width .18s ease, margin-left .18s ease, padding-left .18s ease;
+    }
+}
+
+/* Appearance color pickers (Settings > Appearance) */
+.color-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-swatch-input {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid var(--hr-border);
+    border-radius: var(--hr-radius-sm);
+    background: var(--hr-surface);
+    cursor: pointer;
+}
+
+.color-swatch-input::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.color-swatch-input::-webkit-color-swatch {
+    border: 0;
+    border-radius: 5px;
+}
+
+.color-hex-input {
+    flex: 1 1 auto;
+    text-transform: uppercase;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* ==========================================================================
+   Kanban board (Tasks > Kanban) — modern columns/cards with time-in-stage
+   tracking. Uses the same --hr-* theme tokens as the rest of the admin UI.
+   ========================================================================== */
+
+.kanban-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.kanban-search {
+    position: relative;
+    flex: 0 1 320px;
+}
+
+.kanban-search i {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    transform: translateY(-50%);
+    color: var(--hr-muted);
+    font-size: 12px;
+}
+
+.kanban-search input {
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 10px 6px 30px;
+    font-size: 12.5px;
+    color: var(--hr-text);
+    background: var(--hr-surface);
+    border: 1px solid var(--hr-border);
+    border-radius: var(--hr-radius-sm);
+}
+
+.kanban-search input:focus {
+    outline: none;
+    border-color: var(--hr-accent);
+    box-shadow: 0 0 0 .2rem rgba(var(--hr-accent-rgb), .14);
+}
+
+.kanban-legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.kanban-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--hr-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.kanban-age-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.kanban-board {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.kanban-column {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 268px;
+    width: 268px;
+    max-height: calc(100vh - 210px);
+    background: var(--hr-surface-subtle);
+    border: 1px solid var(--hr-border);
+    border-radius: var(--hr-radius);
+    overflow: hidden;
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    background: var(--hr-surface);
+    border-bottom: 1px solid var(--hr-border);
+    border-top: 2px solid var(--kanban-accent, var(--hr-border-strong));
+}
+
+.kanban-column-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kanban-accent, var(--hr-border-strong));
+    flex: 0 0 auto;
+}
+
+.kanban-column-title {
+    flex: 1 1 auto;
+    color: var(--hr-text);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.kanban-column-count {
+    flex: 0 0 auto;
+    min-width: 20px;
+    padding: 1px 7px;
+    color: var(--hr-muted);
+    background: var(--hr-page-bg);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.kanban-drop-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 auto;
+    padding: 10px;
+    overflow-y: auto;
+    transition: background-color .15s ease;
+}
+
+.kanban-drop-zone-active {
+    background: color-mix(in srgb, var(--hr-accent) 8%, transparent);
+    box-shadow: inset 0 0 0 2px var(--hr-accent-soft);
+}
+
+.kanban-empty {
+    padding: 18px 10px;
+    color: var(--hr-muted);
+    text-align: center;
+    font-size: 12px;
+    border: 1px dashed var(--hr-border-strong);
+    border-radius: var(--hr-radius-sm);
+}
+
+.kanban-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 10px 10px 12px;
+    background: var(--hr-surface);
+    border: 1px solid var(--hr-border);
+    border-left: 3px solid var(--kanban-priority-color, var(--hr-border-strong));
+    border-radius: var(--hr-radius-sm);
+    box-shadow: var(--hr-shadow-soft);
+    cursor: grab;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.kanban-card:hover {
+    box-shadow: var(--hr-shadow);
+    transform: translateY(-1px);
+}
+
+.kanban-card-dragging {
+    opacity: .5;
+    cursor: grabbing;
+}
+
+.kanban-card-hidden {
+    display: none;
+}
+
+.kanban-card-top {
+    display: flex;
+}
+
+.kanban-card-title {
+    color: var(--hr-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.kanban-card-title:hover {
+    color: var(--hr-accent);
+}
+
+.kanban-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kanban-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    color: var(--hr-accent);
+    background: var(--hr-accent-soft);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.kanban-assignee-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--hr-muted);
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kanban-priority-badge {
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+.kanban-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--hr-border);
+}
+
+.kanban-age-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
+.kanban-age-fresh {
+    color: #198754;
+    background: #e6f6ec;
+}
+
+.kanban-age-warning {
+    color: #b7791f;
+    background: #fdf3e0;
+}
+
+.kanban-age-stale {
+    color: #dc3545;
+    background: #fbe7e9;
+}
+
+.kanban-due {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--hr-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.kanban-due-overdue {
+    color: #dc3545;
+}
+
+@media (max-width: 576px) {
+    .kanban-column {
+        flex: 0 0 82vw;
+        width: 82vw;
     }
 }

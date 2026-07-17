@@ -11,7 +11,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         <form method="POST" action="{{ $mode === 'create' ? route('projects.store') : route('projects.update', $project) }}" class="row g-2">
             @csrf
             @if($mode === 'edit') @method('PUT') @endif

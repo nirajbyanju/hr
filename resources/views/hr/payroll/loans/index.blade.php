@@ -12,7 +12,7 @@
     @include('partials.flash')
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <form method="POST" action="{{ route('payroll.loans.store') }}" class="row g-2 mb-4">
                         @csrf

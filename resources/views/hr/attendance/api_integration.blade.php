@@ -22,7 +22,7 @@
             @endif
 
             @if($canManageAttendance)
-                <div class="card no-border mb-3">
+                <div class="mb-3">
                     <div class="content_wrapper content-padded">
                         <h5 class="table_banner_title mb-3">{{ __('Create API Client') }}</h5>
                         <form method="POST" action="{{ route('attendance.api-clients.store') }}" class="row g-2">
@@ -43,7 +43,7 @@
                 </div>
             @endif
 
-            <div class="card no-border mb-3">
+            <div class="mb-3">
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Endpoint') }}</h5>
                     <pre class="mb-2 api-endpoint-block"><code>{{ __('POST /api/v1/attendance/logs/bulk') }}</code></pre>
@@ -72,7 +72,7 @@ Content-Type: application/json</code></pre>
                 </div>
             </div>
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('API Clients') }}</h5>
                     <div class="table-responsive">

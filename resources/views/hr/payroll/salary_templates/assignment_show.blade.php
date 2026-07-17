@@ -11,7 +11,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     @php
                         $allowances = (float) $assignment->house_rent + (float) $assignment->medical_allowance + (float) $assignment->conveyance_allowance + (float) $assignment->other_allowance;

@@ -12,7 +12,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         <form method="GET" class="row g-2 mb-3">
             <div class="col-md-4"><input type="text" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="{{ __('Search name/code') }}"></div>
             <div class="col-md-2"><select name="team_id" class="form-control"><option value="0">{{ __('All Teams') }}</option>@foreach($teams as $team)<option value="{{ $team->id }}" {{ (int)$filters['team_id']===(int)$team->id?'selected':'' }}>{{ $team->name }}</option>@endforeach</select></div>

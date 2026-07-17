@@ -30,6 +30,8 @@ class UpdateSettingsRequest extends FormRequest
             'company_email' => ['nullable', 'email', 'max:180'],
             'company_phone' => ['nullable', 'string', 'max:60'],
             'company_address' => ['nullable', 'string', 'max:1000'],
+            'primary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'currency_prefix' => ['nullable', 'string', 'max:20'],
             'employee_code_prefix' => ['nullable', 'string', 'max:30'],
             'invoice_prefix' => ['nullable', 'string', 'max:30'],

@@ -11,7 +11,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     @php($employee = $leaveBalance->employee)
                     @php($employeeName = trim(($employee?->first_name ?? '').' '.($employee?->last_name ?? '')))

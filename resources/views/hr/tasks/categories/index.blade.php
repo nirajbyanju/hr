@@ -10,7 +10,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         <div class="table-responsive"><table class="table table-bordered align-middle">
             <thead><tr><th>{{ __('Name') }}</th><th>{{ __('Color') }}</th><th>{{ __('Active') }}</th><th>{{ __('Actions') }}</th></tr></thead>
             <tbody>

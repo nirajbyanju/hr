@@ -10,7 +10,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         <form method="POST" action="{{ route('projects.members.sync', $project) }}">
             @csrf
             <div id="project-members-wrapper" class="d-grid" class="gap-10">

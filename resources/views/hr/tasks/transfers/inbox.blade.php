@@ -12,7 +12,7 @@
 
     @include('partials.flash')
 
-    <div class="page-content"><div class="container-fluid"><div class="card no-border"><div class="content_wrapper content-padded">
+    <div class="page-content"><div class="container-fluid"><div><div class="content_wrapper content-padded">
         @forelse($transfers as $transfer)
             <div class="border p-3 mb-2">
                 <p><strong>{{ __('Task:') }}</strong> <a href="{{ route('tasks.show', $transfer->task_id) }}">#{{ $transfer->task_id }} {{ $transfer->task?->title }}</a></p>

@@ -6,7 +6,7 @@
     @include('partials.flash')
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     @if($canGeneratePayroll ?? false)
                         <h5 class="table_banner_title mb-2">{{ __('Generate Payroll Draft') }}</h5>

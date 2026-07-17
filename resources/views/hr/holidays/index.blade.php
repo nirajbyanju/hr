@@ -18,7 +18,7 @@
 
     <div class="page-content">
         <div class="container-fluid">
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <ul class="nav nav-tabs holiday-tab-nav mb-3" id="holidayTab" role="tablist">
                         <li class="nav-item" role="presentation">

@@ -12,7 +12,7 @@
     <div class="page-content">
         <div class="container-fluid">
             @if($canManageBalances && $hasAllAccess)
-                <div class="card no-border mb-3">
+                <div class="mb-3">
                     <div class="content_wrapper content-padded">
                         <h5 class="table_banner_title mb-3">{{ __('Balance Sync (Salary Grade Policy to Employee)') }}</h5>
                         <form method="POST" action="{{ route('leave-balances.sync') }}" class="row g-2">
@@ -48,7 +48,7 @@
                 </div>
             @endif
 
-            <div class="card no-border">
+            <div>
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ $isSelfView ? __('My Leave Balance History') : __('Employee Leave Balance List') }}</h5>
 
