@@ -104,8 +104,10 @@ class ProjectRepository
             'manager:id,employee_code,first_name,last_name',
             'members:id,employee_code,first_name,last_name,department_id',
             'members.department:id,name',
-            'tasks:id,project_id,title,status,priority,assigned_to_employee_id,due_date,progress_percent',
-            'tasks.assignee:id,employee_code,first_name,last_name',
+            'tasks:id,project_id,title,status_id,priority_id,owner_employee_id,due_date,progress_percent',
+            'tasks.status:id,name,color',
+            'tasks.priority:id,name,color',
+            'tasks.owner:id,employee_code,first_name,last_name',
         ]);
     }
 

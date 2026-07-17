@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "laravel-serve",
-      "runtimeExecutable": "php",
-      "runtimeArgs": ["artisan", "serve"],
-      "port": 8000
+      "runtimeExecutable": "C:\\xampp\\php\\php.exe",
+      "runtimeArgs": ["artisan", "serve", "--port=8017"],
+      "port": 8017
     }
   ]
 }

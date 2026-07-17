@@ -4,6 +4,7 @@
     <title>{{ $title ?? config('app.name', 'SamriddhiHR') }}</title>
     <meta name="description" content="{{ $metaDescription ?? '' }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="apple-touch-icon" href="{{ asset(config('madpos_ui.favicon')) }}">
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset(config('madpos_ui.favicon')) }}">

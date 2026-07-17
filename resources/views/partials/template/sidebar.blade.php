@@ -114,7 +114,20 @@
                                 <li class="{{ request()->routeIs('projects.*') ? 'active' : '' }}"><a href="{{ route('projects.index') }}">{{ __('Projects') }}</a></li>
                             @endif
                             @if(($s['canTaskView'] ?? false) || ($s['canTaskCreate'] ?? false) || ($s['canTaskUpdate'] ?? false) || ($s['canTaskAssign'] ?? false) || ($s['canTaskComment'] ?? false))
-                                <li class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}"><a href="{{ route('tasks.index') }}">{{ __('Tasks') }}</a></li>
+                                <li class="{{ request()->routeIs('tasks.index') || request()->routeIs('tasks.show') || request()->routeIs('tasks.create') || request()->routeIs('tasks.edit') ? 'active' : '' }}"><a href="{{ route('tasks.index') }}">{{ __('Tasks') }}</a></li>
+                            @endif
+                            @if($s['canTaskKanbanView'] ?? false)
+                                <li class="{{ request()->routeIs('tasks.kanban') ? 'active' : '' }}"><a href="{{ route('tasks.kanban') }}">{{ __('Kanban Board') }}</a></li>
+                            @endif
+                            @if($s['canTaskView'] ?? false)
+                                <li class="{{ request()->routeIs('tasks.my-dashboard') ? 'active' : '' }}"><a href="{{ route('tasks.my-dashboard') }}">{{ __('My Tasks') }}</a></li>
+                            @endif
+                            @if(($s['canTaskTransferRequest'] ?? false) || ($s['canTaskTransferApprove'] ?? false) || ($s['canTaskTransferView'] ?? false))
+                                <li class="{{ request()->routeIs('tasks.transfers.*') ? 'active' : '' }}"><a href="{{ route('tasks.transfers.inbox') }}">{{ __('Task Transfers') }}</a></li>
+                            @endif
+                            @if($s['canTaskCategoryManage'] ?? false)
+                                <li class="{{ request()->routeIs('task-categories.*') ? 'active' : '' }}"><a href="{{ route('task-categories.index') }}">{{ __('Task Categories') }}</a></li>
+                                <li class="{{ request()->routeIs('task-tags.*') ? 'active' : '' }}"><a href="{{ route('task-tags.index') }}">{{ __('Task Tags') }}</a></li>
                             @endif
                         </ul>
                     </li>

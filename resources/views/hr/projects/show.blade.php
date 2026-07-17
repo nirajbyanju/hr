@@ -59,13 +59,13 @@
 
                 if ($assignedRows->isEmpty()) {
                     $assignedRows = $project->tasks
-                        ->pluck('assignee')
+                        ->pluck('owner')
                         ->filter()
                         ->unique('id')
                         ->values()
                         ->map(fn($member) => [
                             'employee' => $member,
-                            'role' => 'Task Assignee',
+                            'role' => 'Task Owner',
                         ]);
                 }
             @endphp
@@ -80,13 +80,13 @@
         </div></div>
         <div class="col-md-12"><div class="content_wrapper content-padded">
             <h5 class="table_banner_title mb-3">{{ __('Project Tasks') }}</h5>
-            <div class="table-responsive"><table class="table table-bordered align-middle"><thead><tr><th>{{ __('Title') }}</th><th>{{ __('Assignee') }}</th><th>{{ __('Priority') }}</th><th>{{ __('Status') }}</th><th>{{ __('Due Date') }}</th><th>{{ __('Progress') }}</th></tr></thead><tbody>
+            <div class="table-responsive"><table class="table table-bordered align-middle"><thead><tr><th>{{ __('Title') }}</th><th>{{ __('Owner') }}</th><th>{{ __('Priority') }}</th><th>{{ __('Status') }}</th><th>{{ __('Due Date') }}</th><th>{{ __('Progress') }}</th></tr></thead><tbody>
                 @forelse($project->tasks as $task)
                     <tr>
                         <td><a href="{{ route('tasks.show', $task) }}">{{ $task->title }}</a></td>
-                        <td>{{ trim(($task->assignee?->first_name ?? '').' '.($task->assignee?->last_name ?? '')) ?: '-' }}</td>
-                        <td>{{ __(ucfirst($task->priority)) }}</td>
-                        <td>{{ __(ucfirst(str_replace('_',' ', $task->status))) }}</td>
+                        <td>{{ trim(($task->owner?->first_name ?? '').' '.($task->owner?->last_name ?? '')) ?: '-' }}</td>
+                        <td>@if($task->priority)<span class="badge" style="background-color: {{ $task->priority->color }}">{{ $task->priority->name }}</span>@else - @endif</td>
+                        <td>@if($task->status)<span class="badge" style="background-color: {{ $task->status->color }}">{{ $task->status->name }}</span>@else - @endif</td>
                         <td>{{ $task->due_date ?? '-' }}</td>
                         <td>{{ (int) $task->progress_percent }}%</td>
                     </tr>

@@ -128,7 +128,7 @@ class DemoUserSeeder extends Seeder
         $roles['hr-admin']->permissions()->sync(
             Permission::query()
                 ->whereIn('access_scope', ['admin', 'general'])
-                ->orWhereIn('group_name', ['dashboard', 'employee', 'attendance', 'leave', 'payroll', 'bonus', 'loan', 'employee_loan', 'loan_installment', 'deduction', 'employee_deduction', 'provident_fund', 'salary_grade', 'salary_template', 'employee_salary', 'payroll_run', 'payslip', 'holiday', 'department', 'designation', 'announcement', 'note', 'notification', 'report'])
+                ->orWhereIn('group_name', ['dashboard', 'employee', 'attendance', 'leave', 'payroll', 'bonus', 'loan', 'employee_loan', 'loan_installment', 'deduction', 'employee_deduction', 'provident_fund', 'salary_grade', 'salary_template', 'employee_salary', 'payroll_run', 'payslip', 'holiday', 'department', 'designation', 'announcement', 'note', 'notification', 'report', 'task', 'task_comment', 'task_checklist', 'task_attachment', 'task_transfer', 'project', 'team'])
                 ->pluck('id')
                 ->all()
         );
@@ -161,6 +161,15 @@ class DemoUserSeeder extends Seeder
                     'note.create-private',
                     'note.update-private',
                     'notification.view',
+                    'task.assign-team',
+                    'task.transfer-approve',
+                    'task.review-approve',
+                    'task.review-reject',
+                    'task.reopen',
+                    'task.close',
+                    'task_checklist.manage',
+                    'task_attachment.delete',
+                    'task_transfer.view',
                 ])
                 ->pluck('id')
                 ->all()
@@ -185,6 +194,19 @@ class DemoUserSeeder extends Seeder
                     'note.create-private',
                     'note.update-private',
                     'notification.view',
+                    'task.view',
+                    'task.comment',
+                    'task.advance-status',
+                    'task.complete',
+                    'task.watch',
+                    'task.transfer-request',
+                    'task_comment.create',
+                    'task_comment.update',
+                    'task_comment.delete',
+                    'task_checklist.check',
+                    'task_attachment.view',
+                    'task_attachment.upload',
+                    'task_attachment.preview',
                 ])
                 ->pluck('id')
                 ->all()

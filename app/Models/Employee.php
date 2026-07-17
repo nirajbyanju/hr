@@ -50,6 +50,11 @@ class Employee extends Model
         return $this->hasMany(Employee::class, 'reports_to_id');
     }
 
+    public function fullName(): string
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
     public function leaveApplications(): HasMany
     {
         return $this->hasMany(LeaveApplication::class);

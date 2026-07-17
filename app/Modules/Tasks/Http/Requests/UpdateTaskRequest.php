@@ -19,16 +19,18 @@ class UpdateTaskRequest extends FormRequest
     {
         return [
             'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'assigned_to_employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'category_id' => ['nullable', 'integer', 'exists:task_categories,id'],
+            'priority_id' => ['required', 'integer', 'exists:task_priorities,id'],
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'priority' => ['required', Rule::in(['low', 'medium', 'high', 'urgent'])],
-            'status' => ['required', Rule::in(['todo', 'in_progress', 'review', 'done', 'blocked', 'cancelled'])],
+            'description' => ['nullable', 'string', 'max:20000'],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'progress_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'estimated_hours' => ['nullable', 'numeric', 'min:0'],
-            'actual_hours' => ['nullable', 'numeric', 'min:0'],
+            'estimated_hours' => ['nullable', 'numeric', 'min:0', 'max:9999'],
+            'actual_hours' => ['nullable', 'numeric', 'min:0', 'max:9999'],
+            'visibility' => ['nullable', Rule::in(['public', 'private'])],
+            'parent_task_id' => ['nullable', 'integer', 'exists:tasks,id'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => ['integer', 'exists:task_tags,id'],
         ];
     }
 }

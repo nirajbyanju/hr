@@ -22,7 +22,17 @@ use App\Modules\Leaves\Http\Controllers\LeavePolicyController;
 use App\Modules\Payroll\Http\Controllers\PayrollController;
 use App\Modules\Projects\Http\Controllers\ProjectController;
 use App\Modules\SalaryGrades\Http\Controllers\SalaryGradeController;
+use App\Modules\Tasks\Http\Controllers\TaskAssignmentController;
+use App\Modules\Tasks\Http\Controllers\TaskAttachmentController;
+use App\Modules\Tasks\Http\Controllers\TaskCategoryController;
+use App\Modules\Tasks\Http\Controllers\TaskChecklistController;
+use App\Modules\Tasks\Http\Controllers\TaskCommentController;
 use App\Modules\Tasks\Http\Controllers\TaskController;
+use App\Modules\Tasks\Http\Controllers\TaskDependencyController;
+use App\Modules\Tasks\Http\Controllers\TaskKanbanController;
+use App\Modules\Tasks\Http\Controllers\TaskTagController;
+use App\Modules\Tasks\Http\Controllers\TaskTransferController;
+use App\Modules\Tasks\Http\Controllers\TaskWatcherController;
 use App\Modules\Teams\Http\Controllers\TeamController;
 use App\Modules\Users\Http\Controllers\PermissionController;
 use App\Modules\Users\Http\Controllers\RoleController;
@@ -171,12 +181,65 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
         Route::get('/', [TaskController::class, 'index'])->middleware('permission:task.view,task.create,task.update,task.assign,task.comment')->name('index');
         Route::get('/create', [TaskController::class, 'create'])->middleware('permission:task.create')->name('create');
         Route::post('/', [TaskController::class, 'store'])->middleware('permission:task.create')->name('store');
+        Route::get('/kanban', [TaskKanbanController::class, 'index'])->middleware('permission:task.view')->name('kanban');
+        Route::patch('/kanban/{assignment}/move', [TaskKanbanController::class, 'move'])->middleware('permission:task.advance-status,task.assign-team')->name('kanban.move');
+        Route::get('/my-dashboard', [TaskController::class, 'myDashboard'])->middleware('permission:task.view')->name('my-dashboard');
+
+        Route::patch('/assignments/{assignment}/transition', [TaskAssignmentController::class, 'transition'])
+            ->middleware('permission:task.advance-status,task.complete,task.review-approve,task.review-reject,task.reopen,task.close,task.assign-team')
+            ->name('assignments.transition');
+        Route::delete('/assignments/{assignment}', [TaskAssignmentController::class, 'destroy'])->middleware('permission:task.assign,task.assign-team')->name('assignments.destroy');
+
+        Route::post('/checklists/{checklist}/items', [TaskChecklistController::class, 'storeItem'])->middleware('permission:task_checklist.manage')->name('checklists.items.store');
+        Route::delete('/checklists/{checklist}', [TaskChecklistController::class, 'destroy'])->middleware('permission:task_checklist.manage')->name('checklists.destroy');
+        Route::patch('/checklist-items/{item}/toggle', [TaskChecklistController::class, 'toggleItem'])->middleware('permission:task_checklist.check,task_checklist.manage')->name('checklist-items.toggle');
+        Route::delete('/checklist-items/{item}', [TaskChecklistController::class, 'destroyItem'])->middleware('permission:task_checklist.manage')->name('checklist-items.destroy');
+
+        Route::get('/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->middleware('permission:task_attachment.view')->name('attachments.download');
+        Route::get('/attachments/{attachment}/preview', [TaskAttachmentController::class, 'preview'])->middleware('permission:task_attachment.view,task_attachment.preview')->name('attachments.preview');
+        Route::delete('/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->middleware('permission:task_attachment.delete')->name('attachments.destroy');
+
+        Route::put('/comments/{comment}', [TaskCommentController::class, 'update'])->middleware('permission:task_comment.update')->name('comments.update');
+        Route::delete('/comments/{comment}', [TaskCommentController::class, 'destroy'])->middleware('permission:task_comment.delete')->name('comments.destroy');
+
+        Route::delete('/dependencies/{dependency}', [TaskDependencyController::class, 'destroy'])->middleware('permission:task.update')->name('dependencies.destroy');
+
         Route::get('/{task}', [TaskController::class, 'show'])->middleware('permission:task.view,task.create,task.update,task.assign,task.comment')->name('show');
         Route::get('/{task}/edit', [TaskController::class, 'edit'])->middleware('permission:task.update')->name('edit');
         Route::put('/{task}', [TaskController::class, 'update'])->middleware('permission:task.update')->name('update');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->middleware('permission:task.delete')->name('destroy');
-        Route::patch('/{task}/status', [TaskController::class, 'updateStatus'])->middleware('permission:task.update,task.assign')->name('status.update');
         Route::post('/{task}/comments', [TaskController::class, 'addComment'])->middleware('permission:task.comment')->name('comments.store');
+        Route::post('/{task}/assignments', [TaskAssignmentController::class, 'store'])->middleware('permission:task.assign,task.assign-team')->name('assignments.store');
+        Route::post('/{task}/checklists', [TaskChecklistController::class, 'store'])->middleware('permission:task_checklist.manage')->name('checklists.store');
+        Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->middleware('permission:task_attachment.upload')->name('attachments.store');
+        Route::post('/{task}/dependencies', [TaskDependencyController::class, 'store'])->middleware('permission:task.update')->name('dependencies.store');
+        Route::post('/{task}/watch', [TaskWatcherController::class, 'store'])->middleware('permission:task.watch')->name('watch');
+        Route::delete('/{task}/watch', [TaskWatcherController::class, 'destroy'])->middleware('permission:task.watch')->name('unwatch');
+    });
+
+    Route::prefix('task-transfers')->name('tasks.transfers.')->group(function (): void {
+        Route::get('/', [TaskTransferController::class, 'index'])->middleware('permission:task_transfer.view')->name('index');
+        Route::get('/inbox', [TaskTransferController::class, 'inbox'])->middleware('permission:task.transfer-request,task.view')->name('inbox');
+        Route::post('/', [TaskTransferController::class, 'store'])->middleware('permission:task.transfer-request,task.assign-team')->name('store');
+        Route::patch('/{transfer}/decide', [TaskTransferController::class, 'decide'])->middleware('permission:task.transfer-request,task.transfer-approve,task.assign-team')->name('decide');
+    });
+
+    Route::prefix('task-categories')->name('task-categories.')->group(function (): void {
+        Route::get('/', [TaskCategoryController::class, 'index'])->middleware('permission:task.view,task.create,task.update')->name('index');
+        Route::get('/create', [TaskCategoryController::class, 'create'])->middleware('permission:task.create')->name('create');
+        Route::post('/', [TaskCategoryController::class, 'store'])->middleware('permission:task.create')->name('store');
+        Route::get('/{category}/edit', [TaskCategoryController::class, 'edit'])->middleware('permission:task.update')->name('edit');
+        Route::put('/{category}', [TaskCategoryController::class, 'update'])->middleware('permission:task.update')->name('update');
+        Route::delete('/{category}', [TaskCategoryController::class, 'destroy'])->middleware('permission:task.delete')->name('destroy');
+    });
+
+    Route::prefix('task-tags')->name('task-tags.')->group(function (): void {
+        Route::get('/', [TaskTagController::class, 'index'])->middleware('permission:task.view,task.create,task.update')->name('index');
+        Route::get('/create', [TaskTagController::class, 'create'])->middleware('permission:task.create')->name('create');
+        Route::post('/', [TaskTagController::class, 'store'])->middleware('permission:task.create')->name('store');
+        Route::get('/{tag}/edit', [TaskTagController::class, 'edit'])->middleware('permission:task.update')->name('edit');
+        Route::put('/{tag}', [TaskTagController::class, 'update'])->middleware('permission:task.update')->name('update');
+        Route::delete('/{tag}', [TaskTagController::class, 'destroy'])->middleware('permission:task.delete')->name('destroy');
     });
 
     Route::prefix('salary-grades')->name('salary-grades.')->group(function (): void {

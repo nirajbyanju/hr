@@ -8,7 +8,8 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\SystemSetting;
-use App\Models\Task;
+use App\Models\TaskAssignment;
+use App\Models\TaskTransferRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,9 @@ class AppServiceProvider extends ServiceProvider
                     || request()->routeIs('leave-reports.*'),
                 'isWork' => request()->routeIs('teams.*')
                     || request()->routeIs('projects.*')
-                    || request()->routeIs('tasks.*'),
+                    || request()->routeIs('tasks.*')
+                    || request()->routeIs('task-categories.*')
+                    || request()->routeIs('task-tags.*'),
                 'isHoliday' => request()->routeIs('holidays.*'),
                 'isPayroll' => request()->routeIs('payroll.*') || request()->routeIs('salary-grades.*'),
                 'isReports' => request()->routeIs('reports.*') || request()->routeIs('leave-reports.*'),
@@ -114,6 +117,23 @@ class AppServiceProvider extends ServiceProvider
                 'canTaskUpdate' => $can('task.update'),
                 'canTaskAssign' => $can('task.assign'),
                 'canTaskComment' => $can('task.comment'),
+                'canTaskAdvanceStatus' => $can('task.advance-status'),
+                'canTaskComplete' => $can('task.complete'),
+                'canTaskAssignTeam' => $can('task.assign-team'),
+                'canTaskTransferRequest' => $can('task.transfer-request'),
+                'canTaskTransferApprove' => $can('task.transfer-approve'),
+                'canTaskTransferView' => $can('task_transfer.view'),
+                'canTaskReviewDecide' => $canAny(['task.review-approve', 'task.review-reject']),
+                'canTaskReopen' => $can('task.reopen'),
+                'canTaskClose' => $can('task.close'),
+                'canTaskWatch' => $can('task.watch'),
+                'canTaskCommentManage' => $canAny(['task_comment.create', 'task_comment.update', 'task_comment.delete']),
+                'canTaskChecklistManage' => $can('task_checklist.manage'),
+                'canTaskChecklistCheck' => $canAny(['task_checklist.check', 'task_checklist.manage']),
+                'canTaskAttachmentUpload' => $can('task_attachment.upload'),
+                'canTaskAttachmentDelete' => $can('task_attachment.delete'),
+                'canTaskKanbanView' => $can('task.view'),
+                'canTaskCategoryManage' => $canAny(['task.create', 'task.update', 'task.delete']),
                 'canPayrollView' => $canAny(['payroll_run.view', 'payroll_run.generate']),
                 'canPayrollGenerate' => $can('payroll_run.generate'),
                 'canPayrollSalaryGrades' => $canAny(['salary_grade.view', 'salary_grade.create', 'salary_grade.update']),
@@ -353,24 +373,87 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        if ($employee && $user->hasPermission('task.view') && Schema::hasTable('tasks')) {
-            Task::query()
-                ->where('assigned_to_employee_id', (int) $employee->id)
-                ->whereNotIn('status', ['done', 'cancelled'])
-                ->where(function ($query) use ($today): void {
+        if ($employee && $user->hasPermission('task.view') && Schema::hasTable('task_assignments')) {
+            TaskAssignment::query()
+                ->with('task:id,title,due_date', 'status:id,code')
+                ->where('employee_id', (int) $employee->id)
+                ->where('is_active', true)
+                ->whereHas('status', fn ($q) => $q->whereNotIn('code', ['completed', 'closed', 'rejected']))
+                ->whereHas('task', function ($query) use ($today): void {
                     $query->whereNull('due_date')->orWhereDate('due_date', '<=', $today->addDays(7));
                 })
-                ->orderByRaw('due_date IS NULL')
-                ->orderBy('due_date')
+                ->orderBy('id')
                 ->limit(3)
                 ->get()
-                ->each(function (Task $task) use ($items): void {
+                ->each(function (TaskAssignment $assignment) use ($items): void {
+                    $dueDate = $assignment->task?->due_date;
                     $items->push([
                         'title' => 'Task Reminder',
-                        'message' => $task->title,
-                        'time' => $task->due_date ? CarbonImmutable::parse($task->due_date)->diffForHumans() : 'No due date',
-                        'url' => route('tasks.show', $task),
+                        'message' => (string) $assignment->task?->title,
+                        'time' => $dueDate ? CarbonImmutable::parse($dueDate)->diffForHumans() : 'No due date',
+                        'url' => route('tasks.show', $assignment->task_id),
                         'icon' => 'icon-briefcase',
+                    ]);
+                });
+
+            TaskAssignment::query()
+                ->with('task:id,title')
+                ->where('employee_id', (int) $employee->id)
+                ->where('is_active', true)
+                ->whereHas('status', fn ($q) => $q->where('code', 'assigned'))
+                ->orderByDesc('assigned_at')
+                ->limit(3)
+                ->get()
+                ->each(function (TaskAssignment $assignment) use ($items): void {
+                    $items->push([
+                        'title' => 'New Task Assigned',
+                        'message' => (string) $assignment->task?->title . ' was assigned to you.',
+                        'time' => $assignment->assigned_at?->diffForHumans() ?? 'Just now',
+                        'url' => route('tasks.show', $assignment->task_id),
+                        'icon' => 'icon-briefcase',
+                    ]);
+                });
+
+            TaskAssignment::query()
+                ->with('task:id,title')
+                ->where('employee_id', (int) $employee->id)
+                ->where('is_active', true)
+                ->whereHas('status', fn ($q) => $q->where('code', 'changes_requested'))
+                ->orderByDesc('updated_at')
+                ->limit(3)
+                ->get()
+                ->each(function (TaskAssignment $assignment) use ($items): void {
+                    $items->push([
+                        'title' => 'Changes Requested',
+                        'message' => (string) $assignment->task?->title . ' was sent back for changes.',
+                        'time' => $assignment->updated_at?->diffForHumans() ?? 'Recently',
+                        'url' => route('tasks.show', $assignment->task_id),
+                        'icon' => 'icon-briefcase',
+                    ]);
+                });
+        }
+
+        if ($employee && $user->hasAnyPermission(['task.transfer-request', 'task.transfer-approve', 'task.assign-team']) && Schema::hasTable('task_transfer_requests')) {
+            TaskTransferRequest::query()
+                ->with('task:id,title')
+                ->where('status', 'pending')
+                ->where(function ($query) use ($employee, $user): void {
+                    $query->where('to_employee_id', (int) $employee->id);
+
+                    if ($user->hasAnyPermission(['task.transfer-approve', 'task.assign-team'])) {
+                        $query->orWhereNotNull('id');
+                    }
+                })
+                ->latest()
+                ->limit(3)
+                ->get()
+                ->each(function (TaskTransferRequest $transfer) use ($items): void {
+                    $items->push([
+                        'title' => 'Transfer Request',
+                        'message' => 'A transfer request is awaiting a decision on "' . ($transfer->task?->title ?? 'a task') . '".',
+                        'time' => $transfer->created_at?->diffForHumans() ?? 'Pending',
+                        'url' => route('tasks.transfers.inbox'),
+                        'icon' => 'icon-share-alt',
                     ]);
                 });
         }
