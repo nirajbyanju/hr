@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             LeavePolicySeeder::class,
             TaskLookupSeeder::class,
+            TaskTagSeeder::class,
         ]);
     }
 }

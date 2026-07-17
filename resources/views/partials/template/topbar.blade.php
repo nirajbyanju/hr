@@ -31,6 +31,19 @@
         <div class="app-topbar-right">
             <ul class="navbar-nav ms-auto" style="display: flex; flex-direction: row;">
 
+                        <li class="d-none d-md-block cmdk-trigger-item">
+                            <a href="#" id="cmdk-trigger" class="cmdk-trigger" role="button" title="{{ __('Search') }} (Ctrl+K)" aria-label="{{ __('Search pages') }} (Ctrl+K)">
+                                <i class="icon-magnifier"></i>
+                                <span class="cmdk-trigger-text">{{ __('Search') }}</span>
+                                <kbd>Ctrl K</kbd>
+                            </a>
+                        </li>
+                        <li class="d-md-none">
+                            <a href="#" class="cmdk-trigger-mobile topbar-hold-trigger" role="button" title="{{ __('Search') }}" aria-label="{{ __('Search pages') }}">
+                                <i class="icon-magnifier"></i>
+                            </a>
+                        </li>
+
                         <li class="dropdown d-none d-sm-block topbar-notification-menu">
                             <a href="#" class="dropdown-toggle topbar-hold-trigger" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="{{ __('Notifications') }}">
                                 <i class="icon-bell"></i>
