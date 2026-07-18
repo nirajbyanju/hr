@@ -3276,6 +3276,234 @@ body {
     }
 }
 
+/* ============================================================
+   Login — split-screen redesign (scoped to .auth-split)
+   ============================================================ */
+.wrapper-login.auth-login.auth-split {
+    display: block;
+    min-height: 100vh;
+    padding: 0;
+    background: var(--login-card-bg);
+}
+
+.auth-split-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* --- Brand panel (left) --- */
+.auth-brand {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 56px 56px 44px;
+    color: #eafaf6;
+    background:
+        radial-gradient(1100px 520px at 78% -12%, rgba(255, 255, 255, 0.20), transparent 58%),
+        linear-gradient(150deg, var(--login-accent-dark) 0%, var(--login-accent) 58%, #37a294 100%);
+}
+
+.auth-brand::before,
+.auth-brand::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.auth-brand::before {
+    width: 440px;
+    height: 440px;
+    right: -150px;
+    bottom: -170px;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.16), transparent 70%);
+}
+
+.auth-brand::after {
+    width: 260px;
+    height: 260px;
+    left: -90px;
+    top: 34%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.10), transparent 70%);
+}
+
+.auth-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.auth-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    font-size: 17px;
+}
+
+.auth-brand-body {
+    max-width: 460px;
+}
+
+.auth-brand-headline {
+    margin: 0 0 16px;
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+}
+
+.auth-brand-sub {
+    margin: 0 0 30px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.auth-brand-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.auth-brand-features li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.94);
+}
+
+.auth-brand-features i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    font-size: 14px;
+}
+
+.auth-brand-foot {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+/* --- Form panel (right) --- */
+.auth-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background: var(--login-card-bg);
+}
+
+.auth-panel-inner {
+    width: min(100%, 396px);
+}
+
+.auth-panel-brand {
+    display: none; /* only shown on small screens where the brand panel is hidden */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 26px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--login-text);
+}
+
+.auth-panel-brand .auth-brand-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--login-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--login-border);
+    color: var(--login-accent);
+    font-size: 15px;
+}
+
+/* Form card is borderless when it sits on the panel */
+.wrapper-login.auth-login.auth-split .form-wrapper {
+    min-height: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.wrapper-login.auth-login.auth-split .login-minimal-heading {
+    margin-bottom: 26px;
+}
+
+.wrapper-login.auth-login.auth-split .login-minimal-heading h2 {
+    font-size: 26px;
+}
+
+.wrapper-login.auth-login.auth-split .login-minimal-heading p {
+    margin-top: 7px;
+    font-size: 14px;
+}
+
+/* Slightly taller, rounder controls for the airier layout */
+.wrapper-login.auth-login.auth-split .form-control {
+    height: 46px;
+    border-radius: 10px;
+}
+
+.wrapper-login.auth-login.auth-split .btn-fullwidth {
+    height: 46px;
+    border-radius: 10px;
+    letter-spacing: 0.02em;
+}
+
+/* Responsive: collapse to a single column */
+@media (max-width: 900px) {
+    .auth-split-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-brand {
+        display: none;
+    }
+
+    .auth-panel-brand {
+        display: inline-flex;
+    }
+
+    .auth-panel {
+        min-height: 100vh;
+        padding: 40px 20px;
+    }
+}
+
+@media (max-width: 420px) {
+    .auth-panel {
+        padding: 28px 16px;
+    }
+}
+
 .fourofour-wrapper {
     margin-top: 120px;
     padding: 24px;

@@ -1,4 +1,4 @@
-@extends('layouts.auth', ['title' => 'SamriddhiHR | Sign In', 'heading' => 'Sign In', 'authClass' => 'auth-login'])
+@extends('layouts.auth', ['title' => 'SamriddhiHR | Sign In', 'heading' => 'Sign In', 'authClass' => 'auth-login', 'split' => true])
 
 @section('content')
     @php($demoPassword = config('demo_users.password', 'P@ssword'))
