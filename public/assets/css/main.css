@@ -4850,6 +4850,258 @@ input[type="file"].form-control:hover::file-selector-button {
     border-radius: 8px;
 }
 
+/* Holiday calendar */
+.holiday-page-title {
+    align-items: flex-start !important;
+}
+
+.holiday-eyebrow,
+.holiday-calendar-kicker,
+.holiday-toolbar-label {
+    display: block;
+    color: #6c7c91;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.holiday-page-title h1 {
+    margin: 2px 0 4px;
+}
+
+.holiday-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border: 1px solid #e6ebf2;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #f7faff 0%, #fff 72%);
+}
+
+.holiday-toolbar-copy strong {
+    color: #172b4d;
+    font-size: 20px;
+}
+
+.holiday-year-form,
+.holiday-calendar-actions,
+.holiday-calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.holiday-year-form .form-control {
+    min-width: 110px;
+}
+
+.holiday-tab-nav {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 0;
+    border-radius: 12px;
+    background: #f1f4f8;
+}
+
+.holiday-tab-nav .nav-link {
+    border: 0;
+    border-radius: 8px;
+    color: #607086;
+    font-weight: 700;
+    padding: 8px 14px;
+}
+
+.holiday-tab-nav .nav-link.active {
+    border: 0;
+    color: #173f73;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(35, 62, 103, .12);
+}
+
+.holiday-calendar-shell {
+    margin-bottom: 12px;
+    padding: 20px;
+    border: 1px solid #e6ebf2;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f7faff 0%, #fff 58%);
+}
+
+.holiday-calendar-topbar,
+.holiday-calendar-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.holiday-calendar-topbar h4 {
+    color: #172b4d;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.holiday-nepali-month {
+    color: #527097;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.holiday-calendar-meta {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e7edf5;
+    color: #6c7c91;
+    font-size: 12px;
+}
+
+.holiday-legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: #2d7ff9;
+}
+
+.holiday-legend-dot.weekend { background: #f59e0b; }
+.holiday-legend-dot.today { background: #10b981; }
+
+.holiday-calendar-grid {
+    gap: 7px;
+}
+
+.holiday-calendar-cell {
+    min-height: 126px;
+    border: 1px solid #e7edf4;
+    border-radius: 12px;
+    padding: 10px;
+    background: #fff;
+}
+
+.holiday-calendar-cell.header {
+    min-height: auto;
+    border: 0;
+    border-radius: 0;
+    color: #6d7d91;
+    background: transparent;
+    font-size: 12px;
+    letter-spacing: .04em;
+}
+
+.holiday-calendar-cell.empty {
+    border-color: transparent;
+    background: #fafbfd;
+}
+
+.holiday-calendar-cell.day {
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.holiday-calendar-cell.day:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(28, 61, 103, .09);
+}
+
+.holiday-calendar-cell.day.has-holiday {
+    border-color: #b6d3ff;
+    background: linear-gradient(145deg, #f1f7ff, #fff);
+}
+
+.holiday-calendar-cell.day.weekend {
+    border-color: #f8dfb0;
+    background: #fffbf3;
+}
+
+.holiday-calendar-cell.day.weekend.has-holiday {
+    border-color: #c6d8ef;
+    background: linear-gradient(145deg, #f0f7ff, #fffbf3);
+}
+
+.holiday-calendar-cell.day.today {
+    box-shadow: inset 0 0 0 2px #10b981;
+}
+
+.holiday-date-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 9px;
+}
+
+.holiday-day-number {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    margin: 0;
+    border-radius: 9px;
+    color: #1a365d;
+    background: #edf4ff;
+    font-size: 13px;
+}
+
+.holiday-nepali-date {
+    max-width: calc(100% - 33px);
+    color: #62758d;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: right;
+}
+
+.holiday-chip {
+    overflow: hidden;
+    margin-bottom: 4px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: #2d7ff9;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.holiday-chip.weekend,
+.weekend-legend {
+    background: #f59e0b;
+}
+
+@media (max-width: 767.98px) {
+    .holiday-page-title,
+    .holiday-toolbar,
+    .holiday-calendar-topbar,
+    .holiday-calendar-meta {
+        align-items: flex-start !important;
+        flex-direction: column;
+    }
+
+    .holiday-calendar-actions,
+    .holiday-year-form {
+        width: 100%;
+    }
+
+    .holiday-calendar-actions .btn,
+    .holiday-year-form .form-control,
+    .holiday-year-form .btn {
+        flex: 1;
+    }
+
+    .holiday-calendar-grid {
+        min-width: 650px;
+    }
+
+    #holiday-calendar-pane {
+        overflow-x: auto;
+    }
+}
+
 /* Dashboard */
 
 .hr-dashboard {
@@ -5649,4 +5901,282 @@ input[type="url"].form-control,
         flex: 0 0 82vw;
         width: 82vw;
     }
+}
+
+/* ==========================================================================
+   Command palette (Ctrl/⌘ + K) + topbar search trigger.
+   Additive global navigation; inherits the --hr-* theme tokens.
+   ========================================================================== */
+
+/* Topbar trigger button */
+.cmdk-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    margin-right: 6px;
+    padding: 0 10px;
+    color: var(--hr-muted);
+    background: var(--hr-surface-subtle);
+    border: 1px solid var(--hr-border);
+    border-radius: var(--hr-radius-sm);
+    font-size: 12.5px;
+    text-decoration: none;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+.cmdk-trigger:hover,
+.cmdk-trigger:focus {
+    color: var(--hr-text);
+    border-color: var(--hr-border-strong);
+    background: var(--hr-surface);
+    text-decoration: none;
+}
+
+.cmdk-trigger i { font-size: 13px; }
+.cmdk-trigger-text { line-height: 1; }
+
+.cmdk-trigger kbd {
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 6px;
+    color: var(--hr-muted);
+    background: var(--hr-page-bg);
+    border: 1px solid var(--hr-border);
+    border-radius: 5px;
+}
+
+/* Overlay + panel */
+.cmdk-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    padding: 12vh 16px 16px;
+    justify-content: center;
+    align-items: flex-start;
+    background: rgba(15, 23, 42, .42);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+.cmdk-overlay.cmdk-open { display: flex; }
+body.cmdk-lock { overflow: hidden; }
+
+.cmdk-panel {
+    width: min(580px, 94vw);
+    max-height: 74vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--hr-surface);
+    border: 1px solid var(--hr-border);
+    border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+    overflow: hidden;
+    animation: cmdk-pop .13s ease-out;
+}
+
+@keyframes cmdk-pop {
+    from { opacity: 0; transform: translateY(-6px) scale(.99); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cmdk-panel { animation: none; }
+}
+
+/* Search row */
+.cmdk-search {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--hr-border);
+}
+
+.cmdk-search > i {
+    font-size: 15px;
+    color: var(--hr-muted);
+    flex: none;
+}
+
+.cmdk-input {
+    flex: 1 1 auto;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--hr-text);
+    font-size: 15px;
+    font-family: inherit;
+    padding: 2px 0;
+}
+
+.cmdk-input::placeholder { color: var(--hr-muted); }
+
+.cmdk-kbd,
+.cmdk-foot kbd {
+    font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 6px;
+    color: var(--hr-muted);
+    background: var(--hr-surface-subtle);
+    border: 1px solid var(--hr-border);
+    border-radius: 5px;
+    flex: none;
+}
+
+/* Results list */
+.cmdk-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 11px;
+    border-radius: var(--hr-radius-sm);
+    cursor: pointer;
+    color: var(--hr-text);
+    font-size: 13.5px;
+}
+
+.cmdk-item > i {
+    font-size: 14px;
+    color: var(--hr-muted);
+    width: 18px;
+    text-align: center;
+    flex: none;
+}
+
+.cmdk-item.is-active {
+    background: var(--hr-accent-soft);
+}
+
+.cmdk-item.is-active > i,
+.cmdk-item.is-active .cmdk-item-label {
+    color: var(--hr-accent);
+}
+
+.cmdk-item-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.cmdk-item-group {
+    flex: none;
+    font-size: 11px;
+    color: var(--hr-muted);
+}
+
+.cmdk-item-tag {
+    flex: none;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: var(--hr-accent);
+    background: var(--hr-accent-soft);
+}
+
+.cmdk-empty {
+    padding: 26px 16px;
+    text-align: center;
+    color: var(--hr-muted);
+    font-size: 13px;
+}
+
+/* Footer hints */
+.cmdk-foot {
+    display: flex;
+    gap: 16px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--hr-border);
+    background: var(--hr-surface-subtle);
+    color: var(--hr-muted);
+    font-size: 11px;
+}
+
+.cmdk-foot span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+@media (max-width: 575px) {
+    .cmdk-overlay { padding-top: 8vh; }
+    .cmdk-foot { display: none; }
+}
+
+/* ==========================================================================
+   Grouped, collapsible sidebar sections (navigation regroup).
+   Header labels sit on the dark sidebar ground; collapsing hides the
+   section's top-level items (persisted per-user in localStorage).
+   ========================================================================== */
+
+.sidebar-menu .sidebar-section {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sidebar-menu .sidebar-section:first-child {
+    margin-top: 2px;
+}
+
+.sidebar-section-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px 5px;
+    background: transparent;
+    border: 0;
+    color: rgba(217, 228, 239, .42);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+
+.sidebar-section-btn:hover {
+    color: rgba(217, 228, 239, .78);
+}
+
+.sidebar-section-btn:focus-visible {
+    outline: 2px solid var(--hr-accent);
+    outline-offset: 2px;
+    border-radius: 5px;
+    color: rgba(217, 228, 239, .78);
+}
+
+.sidebar-section-caret {
+    font-size: 9px;
+    opacity: .7;
+    transition: transform .18s ease;
+}
+
+.sidebar-section.is-collapsed .sidebar-section-caret {
+    transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-section-caret { transition: none; }
 }

@@ -9,6 +9,7 @@
         @yield('content')
         @include('partials.template.footer')
     </div>
+    @include('partials.template.command-palette')
     @include('partials.template.scripts')
 </body>
 
