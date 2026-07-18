@@ -110,10 +110,20 @@ return new class extends Migration
             $table->foreignId('priority_id')->nullable(false)->change();
         });
 
+        // MySQL requires every foreign key column to retain a backing index. The
+        // (project_id, status) and (assigned_to_employee_id, status) composites are
+        // the only indexes serving the project_id and assigned_to_employee_id foreign
+        // keys, so they cannot be dropped while those keys still rely on them (error
+        // 1553). project_id survives this migration, so give it a dedicated index
+        // first; assigned_to_employee_id is being removed, so drop its foreign key.
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->index('project_id');
+            $table->dropForeign(['assigned_to_employee_id']);
+        });
+
         Schema::table('tasks', function (Blueprint $table) {
             $table->dropIndex(['project_id', 'status']);
             $table->dropIndex(['assigned_to_employee_id', 'status']);
-            $table->dropForeign(['assigned_to_employee_id']);
             $table->dropColumn(['assigned_to_employee_id', 'status', 'priority']);
         });
 
@@ -188,6 +198,12 @@ return new class extends Migration
         Schema::table('tasks', function (Blueprint $table) {
             $table->index(['project_id', 'status']);
             $table->index(['assigned_to_employee_id', 'status']);
+        });
+
+        // Remove the standalone project_id index added in up(); the composite above
+        // now backs the project_id foreign key again, so this stays a clean inverse.
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->dropIndex(['project_id']);
         });
     }
 };

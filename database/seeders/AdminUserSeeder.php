@@ -20,8 +20,8 @@ class AdminUserSeeder extends Seeder
 
         $roles = $this->seedDefaultRolesAndPermissions();
 
-        $adminRole = $roles['admin'];
-        $email = env('DEFAULT_ADMIN_EMAIL', 'admin@samriddhihr.local');
+        $adminRole = $roles['super-admin'];
+        $email = env('DEFAULT_ADMIN_EMAIL', 'nirajbanju1234@gmail.com');
         $password = env('DEFAULT_ADMIN_PASSWORD', 'password');
 
         $admin = User::query()->updateOrCreate(
@@ -43,7 +43,7 @@ class AdminUserSeeder extends Seeder
         ]);
 
         $this->command?->info('Default roles, permissions and admin user are ready.');
-        $this->command?->line('Admin role: Admin');
+        $this->command?->line('Admin role: Super Admin');
         $this->command?->line('Admin email: ' . $email);
 
         if ($password === 'password') {

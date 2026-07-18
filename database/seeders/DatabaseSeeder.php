@@ -20,5 +20,11 @@ class DatabaseSeeder extends Seeder
             LeavePolicySeeder::class,
             TaskLookupSeeder::class,
         ]);
+
+        // Demo login accounts (config/demo_users.php) are for local development only
+        // and must never be seeded into staging or production.
+        if (app()->environment('local')) {
+            $this->call(DemoUserSeeder::class);
+        }
     }
 }

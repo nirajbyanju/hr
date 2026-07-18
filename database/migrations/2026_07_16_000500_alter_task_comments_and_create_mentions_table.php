@@ -22,7 +22,10 @@ return new class extends Migration
             $table->foreignId('mentioned_employee_id')->constrained('employees')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['task_comment_id', 'mentioned_employee_id']);
+            // Explicit short name: the auto-generated
+            // task_comment_mentions_task_comment_id_mentioned_employee_id_unique
+            // exceeds MySQL's 64-character identifier limit.
+            $table->unique(['task_comment_id', 'mentioned_employee_id'], 'tcm_comment_employee_unique');
             $table->index('mentioned_employee_id');
         });
     }
