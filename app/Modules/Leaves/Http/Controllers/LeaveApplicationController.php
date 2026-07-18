@@ -50,9 +50,7 @@ class LeaveApplicationController extends Controller
     }
     // The store method handles the submission of a new leave application. It validates the request, checks for various business rules such as overlapping leaves, leave balance, and category constraints, and then creates a new LeaveApplication record if all checks pass. If any validation or business rule fails, it redirects back with appropriate error messages.
     public function store(StoreLeaveApplicationRequest $request): RedirectResponse
-    {
-        //return $request->all();
-        $user = $request->user();
+    {        $user = $request->user();
         $employee = $user->employee;
         if (! $employee) {
         return redirect()->route('leave-applications.index')->withErrors(['leave_category_id' => 'Your user account is not linked with an employee profile.']);
@@ -170,9 +168,7 @@ class LeaveApplicationController extends Controller
 
     // The approvalsIndex method displays a paginated list of leave applications that require the current user's approval. It applies filters based on the request parameters and scopes the results to the user's subordinates if they do not have all-access permissions. The method returns a view with the filtered and paginated applications, along with the list of employees for filtering and the applied filters for reference.
     public function approvalsIndex(Request $request): View
-    {
-        //return $request->all();
-        $user = $request->user();
+    {        $user = $request->user();
         $hasAllAccess = $this->hasAllAccess($user);
         $scopedEmployeeIds = $hasAllAccess ? null : $this->subordinateEmployeeIds($user);
 
@@ -244,9 +240,7 @@ class LeaveApplicationController extends Controller
 
     // The exportApprovalsCsv method allows the user to export the list of leave applications that require their approval as a CSV file. It applies the same filters and scoping as the approvalsIndex method to ensure that only the relevant applications are included in the export. The method generates a streamed response that outputs the CSV data, including a header row and properly formatted application data for each row. The CSV file is encoded in UTF-8 with a Byte Order Mark (BOM) to ensure compatibility with various spreadsheet applications.
     public function exportApprovalsCsv(Request $request): StreamedResponse
-    {
-        //return $request->all();
-        $user = $request->user();
+    {        $user = $request->user();
         $hasAllAccess = $this->hasAllAccess($user);
         $scopedEmployeeIds = $hasAllAccess ? null : $this->subordinateEmployeeIds($user);
 

@@ -21,11 +21,7 @@ class LeavePolicyController extends Controller
     }
 
     public function index(Request $request): View
-    {
-        //return $request->all();
-        $currentYear = (int) now()->year;
-        //date('Y');
-        //return $currentYear;
+    {        $currentYear = (int) now()->year;
         $filters = [
             'year' => (int) $request->input('year', $currentYear),
             'salary_grade_id' => (int) $request->input('salary_grade_id', 0),
@@ -53,9 +49,7 @@ class LeavePolicyController extends Controller
     }
 
     public function store(StoreLeavePolicyRequest $request): RedirectResponse
-    {
-        //return $request->all();
-        $this->leaveService->createPolicy($request->validated());
+    {        $this->leaveService->createPolicy($request->validated());
 
         return redirect()->route('leave-policies.index')->with('success', __('Leave policy created successfully.'));
     }
@@ -71,9 +65,7 @@ class LeavePolicyController extends Controller
     }
 
     public function update(UpdateLeavePolicyRequest $request, LeavePolicy $leavePolicy): RedirectResponse
-    {
-        //return $request->all();
-        $this->leaveService->updatePolicy($leavePolicy, $request->validated());
+    {        $this->leaveService->updatePolicy($leavePolicy, $request->validated());
         return redirect()->route('leave-policies.index')->with('success', __('Leave policy updated successfully.'));
     }
 

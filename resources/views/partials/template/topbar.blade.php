@@ -14,7 +14,7 @@
         <div class="app-topbar-left">
             <div class="logo-container app-logo-container">
                 <a class="navbar-brand text-start app-logo-link" href="{{ route('dashboard') }}">
-                    <img class="app-logo-img" src="{{ asset(config('madpos_ui.logo')) }}" alt="SamriddhiHR">
+                    <img class="app-logo-img" src="{{ asset(config('madpos_ui.logo')) }}" alt="SamriddhiHR" onerror="this.onerror=null;this.src='{{ asset('assets/img/brand-logo.svg') }}';">
                 </a>
             </div>
 

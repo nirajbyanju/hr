@@ -7,6 +7,7 @@ use App\Modules\Announcements\Repositories\AnnouncementRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Mews\Purifier\Facades\Purifier;
 
 class AnnouncementService
 {
@@ -38,7 +39,9 @@ class AnnouncementService
             return $this->announcementRepository->create([
                 'announcement_type' => $payload['announcement_type'],
                 'title' => $payload['title'],
-                'body' => $payload['body'],
+                // Sanitize CKEditor HTML on write: strips <script>, event handlers
+                // and javascript: URIs while keeping safe formatting (SEC-02).
+                'body' => Purifier::clean((string) $payload['body']),
                 'audience_type' => $audienceType,
                 'audience_employee_ids' => $audienceEmployeeIds,
                 'priority' => $payload['priority'] ?? 'normal',
