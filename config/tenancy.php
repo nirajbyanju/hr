@@ -21,9 +21,15 @@ return [
     ],
 
     // Executed when tenancy is initialized (per tenant request).
+    // Executed when tenancy is initialized (per tenant request).
+    //
+    // CacheTenancyBootstrapper is deliberately NOT enabled: Stancl's CacheManager
+    // calls ->tags() on every cache method, but Laravel's `database` store does not
+    // extend TaggableStore (only apc/array/failover/memcached/null/redis do), so it
+    // throws on the first cached read. The one cache consumer we have
+    // (App\Models\SystemSetting) scopes its own key by tenant instead.
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
     ],

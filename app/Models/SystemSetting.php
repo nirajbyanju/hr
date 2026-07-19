@@ -15,6 +15,17 @@ class SystemSetting extends Model
 
     public const CACHE_KEY = 'system_settings.autoloaded';
 
+    /**
+     * Settings are per-tenant, but the cache store is shared and central (see
+     * config/tenancy.php — CacheTenancyBootstrapper is disabled because the
+     * database store does not support tagging). Scope the key by tenant so one
+     * company cannot read another's settings out of the cache.
+     */
+    protected static function cacheKey(): string
+    {
+        return static::CACHE_KEY . ':' . (tenant()?->getTenantKey() ?? 'central');
+    }
+
     public static function getValue(string $key, mixed $default = null): mixed
     {
         $settings = static::autoloaded();
@@ -28,7 +39,7 @@ class SystemSetting extends Model
 
     public static function autoloaded(): array
     {
-        return Cache::rememberForever(static::CACHE_KEY, function (): array {
+        return Cache::rememberForever(static::cacheKey(), function (): array {
             $rows = static::query()->where('autoload', true)->get(['key', 'value', 'is_encrypted']);
 
             $settings = [];
@@ -73,6 +84,6 @@ class SystemSetting extends Model
 
     public static function forgetCache(): void
     {
-        Cache::forget(static::CACHE_KEY);
+        Cache::forget(static::cacheKey());
     }
 }
