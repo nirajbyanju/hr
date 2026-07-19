@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Company;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -28,8 +29,16 @@ class InitializeTenancyFromSession
 
     public function handle(Request $request, Closure $next): Response
     {
-        // The platform console is central by definition.
+        // The platform console is central by definition — no tenant database.
+        //
+        // The default guard is switched to `central` for the whole request, not
+        // just the route middleware. DatabaseSessionHandler writes sessions.user_id
+        // by asking the DEFAULT guard for its id, and a browser that is also
+        // signed in to a tenant would otherwise make it look up that tenant user
+        // in the central database, where the `users` table does not exist.
         if ($request->is('platform', 'platform/*')) {
+            Auth::shouldUse('central');
+
             return $next($request);
         }
 
