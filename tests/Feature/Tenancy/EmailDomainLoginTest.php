@@ -3,7 +3,6 @@
 namespace Tests\Feature\Tenancy;
 
 use App\Models\Company;
-use App\Models\Role;
 use App\Models\User;
 use App\Tenancy\Tenancy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -162,24 +161,8 @@ class EmailDomainLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_the_platform_console_still_works_for_the_super_admin(): void
-    {
-        // The super-admin's own email domain is irrelevant here: /platform/* is
-        // deliberately exempt from email-domain resolution.
-        $default = $this->seedDefaultCompany();
-        $admin = $this->user($default, 'super@example.org');
-
-        $role = Role::query()->create(['name' => 'Super Admin', 'slug' => 'super-admin']);
-        $admin->roles()->syncWithoutDetaching([$role->id]);
-
-        $response = $this->post('/platform/login', [
-            'email' => 'super@example.org',
-            'password' => 'P@ssword123',
-        ]);
-
-        $response->assertRedirect(route('platform.dashboard'));
-        $this->assertAuthenticated();
-    }
+    // Platform console auth now lives on the `central` guard and is covered by
+    // Tests\Feature\Platform\CentralAuthTest.
 
     public function test_the_default_company_is_seeded_with_a_domain(): void
     {

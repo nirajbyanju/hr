@@ -67,14 +67,16 @@ Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
 
 /*
- | Platform (landlord) console — manage tenant companies. Restricted to the
- | super-admin role so a per-company admin cannot manage other tenants.
+ | Platform (landlord) console — manage tenant companies. Runs on the `central`
+ | guard against the central database, so authorization is guard membership:
+ | a row in `central_users` is a platform administrator. Tenant staff use the
+ | `web` guard against their own company database and cannot reach this at all.
  */
 Route::prefix('platform')->name('platform.')->group(function (): void {
     Route::get('login', [PlatformAuthController::class, 'create'])->name('login');
     Route::post('login', [PlatformAuthController::class, 'store'])->middleware('throttle:6,1')->name('login.store');
 
-    Route::middleware(['auth', 'role.any:super-admin'])->group(function (): void {
+    Route::middleware('auth:central')->group(function (): void {
         Route::post('logout', [PlatformAuthController::class, 'destroy'])->name('logout');
         Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
         Route::get('companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');

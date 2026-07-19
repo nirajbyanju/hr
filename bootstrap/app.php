@@ -27,6 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\IdentifyTenant::class,
         );
 
+        // Without this, an expired session on /platform/* would redirect the
+        // platform administrator to the TENANT login, which then cannot resolve
+        // a tenant for their email address.
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => $request->is('platform', 'platform/*')
+            ? route('platform.login')
+            : route('login'));
+
         $middleware->alias([
             'role.any' => \App\Http\Middleware\EnsureUserHasAnyRole::class,
             'permission' => \App\Http\Middleware\EnsureUserHasPermission::class,
