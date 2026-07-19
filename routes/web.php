@@ -5,6 +5,9 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Platform\AuthController as PlatformAuthController;
+use App\Http\Controllers\Platform\CompanyController as PlatformCompanyController;
+use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\ReportController;
 use App\Modules\Announcements\Http\Controllers\AnnouncementController;
 use App\Modules\Settings\Http\Controllers\SettingsController;
@@ -15,6 +18,8 @@ use App\Modules\Employees\Http\Controllers\EmployeeController;
 use App\Modules\Employees\Http\Controllers\EmployeeProfileUpdateRequestController;
 use App\Modules\Employees\Http\Controllers\EmployeeResignationController;
 use App\Modules\Holidays\Http\Controllers\HolidayController;
+use App\Modules\IdCards\Http\Controllers\AttendanceScanController;
+use App\Modules\IdCards\Http\Controllers\IdCardController;
 use App\Modules\Leaves\Http\Controllers\LeaveApplicationController;
 use App\Modules\Leaves\Http\Controllers\LeaveBalanceController;
 use App\Modules\Leaves\Http\Controllers\LeaveCategoryController;
@@ -59,6 +64,26 @@ Route::middleware('guest')->group(function (): void {
 
 Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
+
+/*
+ | Platform (landlord) console — manage tenant companies. Restricted to the
+ | super-admin role so a per-company admin cannot manage other tenants.
+ */
+Route::prefix('platform')->name('platform.')->group(function (): void {
+    Route::get('login', [PlatformAuthController::class, 'create'])->name('login');
+    Route::post('login', [PlatformAuthController::class, 'store'])->middleware('throttle:6,1')->name('login.store');
+
+    Route::middleware(['auth', 'role.any:super-admin'])->group(function (): void {
+        Route::post('logout', [PlatformAuthController::class, 'destroy'])->name('logout');
+        Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+        Route::get('companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');
+        Route::post('companies', [PlatformCompanyController::class, 'store'])->name('companies.store');
+        Route::get('companies/{company}/edit', [PlatformCompanyController::class, 'edit'])->name('companies.edit');
+        Route::put('companies/{company}', [PlatformCompanyController::class, 'update'])->name('companies.update');
+        Route::patch('companies/{company}/status', [PlatformCompanyController::class, 'toggleStatus'])->name('companies.status');
+        Route::delete('companies/{company}', [PlatformCompanyController::class, 'destroy'])->name('companies.destroy');
+    });
+});
 
 Route::middleware(['auth', 'portal.access'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view')->name('dashboard');
@@ -107,6 +132,20 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
         Route::get('/api-integration', [AttendanceController::class, 'apiIntegrationDocs'])->middleware('permission:attendance.api-integration,attendance.manage')->name('api-docs');
         Route::post('/api-integration/clients', [AttendanceController::class, 'createApiClient'])->middleware('permission:attendance.api-integration,attendance.manage')->name('api-clients.store');
         Route::patch('/api-integration/clients/{apiClient}/toggle', [AttendanceController::class, 'toggleApiClient'])->middleware('permission:attendance.api-integration,attendance.manage')->name('api-clients.toggle');
+    });
+
+    Route::prefix('attendance/scan')->name('attendance.scan.')->group(function (): void {
+        Route::get('/', [AttendanceScanController::class, 'index'])->middleware('permission:attendance.scan,attendance.manage')->name('index');
+        Route::post('/', [AttendanceScanController::class, 'scan'])->middleware(['permission:attendance.scan,attendance.manage', 'throttle:60,1'])->name('submit');
+    });
+
+    Route::prefix('id-cards')->name('id-cards.')->group(function (): void {
+        Route::get('/', [IdCardController::class, 'index'])->middleware('permission:id_card.view,id_card.generate,id_card.print,id_card.manage')->name('index');
+        Route::post('/{employee}/generate', [IdCardController::class, 'generate'])->middleware('permission:id_card.generate,id_card.manage')->name('generate');
+        Route::get('/{card}/preview', [IdCardController::class, 'preview'])->middleware('permission:id_card.view,id_card.generate,id_card.print,id_card.manage')->name('preview');
+        Route::get('/{card}/print', [IdCardController::class, 'print'])->middleware('permission:id_card.print,id_card.manage')->name('print');
+        Route::get('/{card}/pdf', [IdCardController::class, 'pdf'])->middleware('permission:id_card.print,id_card.manage')->name('pdf');
+        Route::post('/{card}/revoke', [IdCardController::class, 'revoke'])->middleware('permission:id_card.manage')->name('revoke');
     });
 
     Route::prefix('announcements')->name('announcements.')->group(function (): void {

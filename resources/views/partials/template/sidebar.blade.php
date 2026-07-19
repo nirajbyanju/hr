@@ -91,6 +91,27 @@
                     </li>
                 @endif
 
+                @php($idCardUser = auth()->user())
+                @php($canIdCardMenu = $idCardUser?->hasAnyPermission(['id_card.view', 'id_card.generate', 'id_card.print', 'id_card.manage']) ?? false)
+                @php($canScanMenu = $idCardUser?->hasAnyPermission(['attendance.scan', 'attendance.manage']) ?? false)
+                @if($canIdCardMenu || $canScanMenu)
+                    @php($idCardActive = request()->routeIs('id-cards.*') || request()->routeIs('attendance.scan.*'))
+                    <li id="menu-id-cards" data-id="menu-id-cards" class="main {{ $idCardActive ? 'active' : '' }}">
+                        <a class="has-arrow" href="#" aria-expanded="{{ $idCardActive ? 'true' : 'false' }}">
+                            <i class="icon-badge"></i>
+                            <span>{{ __('ID Cards') }}</span>
+                        </a>
+                        <ul aria-expanded="{{ $idCardActive ? 'true' : 'false' }}">
+                            @if($canIdCardMenu)
+                                <li class="{{ request()->routeIs('id-cards.*') ? 'active' : '' }}"><a href="{{ route('id-cards.index') }}">{{ __('Employee ID Cards') }}</a></li>
+                            @endif
+                            @if($canScanMenu)
+                                <li class="{{ request()->routeIs('attendance.scan.*') ? 'active' : '' }}"><a href="{{ route('attendance.scan.index') }}">{{ __('Attendance Scanner') }}</a></li>
+                            @endif
+                        </ul>
+                    </li>
+                @endif
+
                 @if($s['canAnnouncementMenu'] ?? false)
                     <li id="menu-announcements" data-id="menu-announcements" class="main {{ ($s['isAnnouncements'] ?? false) ? 'active' : '' }}">
                         <a href="{{ route('announcements.index') }}">

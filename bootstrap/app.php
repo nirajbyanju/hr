@@ -12,6 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(prepend: [
+            \App\Http\Middleware\IdentifyTenant::class,
+        ]);
+
+        // dev-only tenant selector cookie (see IdentifyTenant) — read as plaintext.
+        $middleware->encryptCookies(except: ['dev_tenant']);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);

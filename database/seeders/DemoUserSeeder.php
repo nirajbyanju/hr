@@ -9,6 +9,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SalaryGrade;
 use App\Models\User;
+use Database\Seeders\Concerns\ResolvesDefaultCompany;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -16,9 +17,15 @@ use Illuminate\Support\Str;
 
 class DemoUserSeeder extends Seeder
 {
+    use ResolvesDefaultCompany;
+
+    private int $companyId;
+
     public function run(): void
     {
         $this->call(PermissionSeeder::class);
+
+        $this->companyId = $this->defaultCompanyId();
 
         $password = (string) config('demo_users.password', 'P@ssword');
         $accounts = (array) config('demo_users.accounts', []);
@@ -48,6 +55,7 @@ class DemoUserSeeder extends Seeder
             $user = User::query()->updateOrCreate(
                 ['email' => $account['email']],
                 [
+                    'company_id' => $this->companyId,
                     'name' => $account['name'],
                     'password' => Hash::make($password),
                     'account_status' => 'active',
@@ -70,6 +78,7 @@ class DemoUserSeeder extends Seeder
             $employee = Employee::query()->updateOrCreate(
                 ['employee_code' => $account['employee_code']],
                 [
+                    'company_id' => $this->companyId,
                     'user_id' => $user->id,
                     'first_name' => Str::before((string) $account['name'], ' '),
                     'last_name' => Str::after((string) $account['name'], ' '),
@@ -218,6 +227,7 @@ class DemoUserSeeder extends Seeder
         return Department::query()->updateOrCreate(
             ['code' => 'DEMO-HR'],
             [
+                'company_id' => $this->companyId,
                 'name' => 'Demo HR Department',
                 'description' => 'Demo department for public login users.',
                 'is_active' => true,
@@ -245,6 +255,7 @@ class DemoUserSeeder extends Seeder
                 'name' => $name,
             ],
             [
+                'company_id' => $this->companyId,
                 'code' => $code,
                 'description' => $name . ' demo designation.',
                 'is_active' => true,

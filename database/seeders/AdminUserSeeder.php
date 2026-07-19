@@ -5,12 +5,15 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\Concerns\ResolvesDefaultCompany;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
+    use ResolvesDefaultCompany;
+
     /**
      * Seed permissions, default organization roles, role permissions and one admin user.
      */
@@ -27,6 +30,7 @@ class AdminUserSeeder extends Seeder
         $admin = User::query()->updateOrCreate(
             ['email' => $email],
             [
+                'company_id' => $this->defaultCompanyId(),
                 'name' => env('DEFAULT_ADMIN_NAME', 'System Admin'),
                 'password' => Hash::make($password),
                 'account_status' => 'active',
@@ -317,6 +321,7 @@ class AdminUserSeeder extends Seeder
                     'task',
                     'note',
                     'file',
+                    'id_card',
                     'report',
                     'notification',
                 ],
@@ -339,6 +344,7 @@ class AdminUserSeeder extends Seeder
                     'training',
                     'award',
                     'announcement',
+                    'id_card',
                     'report',
                     'notification',
                 ],
