@@ -3,21 +3,17 @@
 namespace Tests\Feature\Tasks;
 
 use App\Models\TaskAttachment;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
-class TaskAttachmentTest extends TestCase
+class TaskAttachmentTest extends TenantTestCase
 {
-    use RefreshDatabase;
     use CreatesTaskFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PermissionSeeder::class);
     }
 
     protected function tearDown(): void

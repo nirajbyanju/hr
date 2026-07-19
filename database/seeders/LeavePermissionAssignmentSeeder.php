@@ -34,16 +34,10 @@ class LeavePermissionAssignmentSeeder extends Seeder
             );
         }
 
+        // No `super-admin` entry: platform administrators live in the central
+        // database on their own guard, and a tenant-side role by that name
+        // would be a privilege-escalation path.
         $rolePermissionMap = [
-            'super-admin' => [
-                'leave.view',
-                'leave.apply',
-                'leave.approve',
-                'leave.manage-categories',
-                'leave.manage-quotas',
-                'leave.manage-balances',
-                'leave.report',
-            ],
             'hr-manager' => [
                 'leave.view',
                 'leave.apply',

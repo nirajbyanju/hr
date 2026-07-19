@@ -3,7 +3,6 @@
 namespace Tests\Feature\Platform;
 
 use App\Models\CentralUser;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -38,7 +37,9 @@ class CentralAuthTest extends TestCase
 
         $response->assertRedirect(route('platform.dashboard'));
         $this->assertAuthenticated('central');
-        $this->assertGuest();
+
+        // Signing in to the console must not sign anyone in to a tenant.
+        $this->assertGuest('web');
     }
 
     public function test_a_disabled_platform_admin_cannot_sign_in(): void
@@ -54,21 +55,18 @@ class CentralAuthTest extends TestCase
         $this->assertGuest('central');
     }
 
-    public function test_a_tenant_user_cannot_sign_in_to_the_console(): void
+    /**
+     * There is no `users` table in the central database at all, so a tenant
+     * user is not merely rejected by the console — they are unreachable from
+     * it. Covered end-to-end with a real tenant in
+     * Tests\Feature\Tenancy\EmailDomainLoginTest.
+     */
+    public function test_credentials_that_are_not_a_platform_admin_are_rejected(): void
     {
-        // A perfectly valid tenant user. They live in `users`, not
-        // `central_users`, so the central guard cannot see them at all.
-        $user = new User();
-        $user->forceFill([
-            'name' => 'Tenant Admin',
-            'email' => 'admin@tenant.test',
-            'password' => Hash::make('P@ssword123'),
-            'account_status' => 'active',
-            'approved_at' => now(),
-        ])->save();
+        $this->centralAdmin();
 
         $response = $this->post('/platform/login', [
-            'email' => 'admin@tenant.test',
+            'email' => 'admin@sometenant.test',
             'password' => 'P@ssword123',
         ]);
 

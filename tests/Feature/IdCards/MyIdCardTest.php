@@ -6,16 +6,14 @@ use App\Models\Employee;
 use App\Models\EmployeeIdCard;
 use App\Models\User;
 use App\Modules\IdCards\Services\IdCardService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
 /**
  * Self-service ID card: an employee sees their own card and only their own.
  */
-class MyIdCardTest extends TestCase
+class MyIdCardTest extends TenantTestCase
 {
-    use RefreshDatabase;
 
     private function employeeUser(string $email, string $code, string $first): Employee
     {
