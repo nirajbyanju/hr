@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Stancl\JobPipeline\JobPipeline;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\DatabaseConfig;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Listeners;
-use Stancl\Tenancy\Middleware;
 
 class TenancyServiceProvider extends ServiceProvider
 {
-    // By default, no namespace is used to support the callable array syntax.
-    public static string $controllerNamespace = '';
 
     public function events()
     {
@@ -27,14 +26,15 @@ class TenancyServiceProvider extends ServiceProvider
                 JobPipeline::make([
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
-                    // Jobs\SeedDatabase::class,
-
-                    // Your own jobs to prepare the tenant.
-                    // Provision API keys, create S3 buckets, anything you want!
-
+                    Jobs\SeedDatabase::class,
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
-                })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
+                })
+                    // MUST stay synchronous. Queued, CreateDatabase would be
+                    // pushed onto the queue and QueueTenancyBootstrapper would
+                    // try to initialize tenancy for a tenant whose database does
+                    // not exist yet.
+                    ->shouldBeQueued(false),
             ],
             Events\SavingTenant::class => [],
             Events\TenantSaved::class => [],
@@ -100,9 +100,32 @@ class TenancyServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->bootEvents();
-        $this->mapRoutes();
+        $this->nameTenantDatabasesBySlug();
+    }
 
-        $this->makeTenancyMiddlewareHighestPriority();
+    /**
+     * Tenant databases are named from the slug ("tenant_ktm_group") rather than
+     * the UUID ("tenant_9f3c1a2e-..."), so they are identifiable in phpMyAdmin.
+     *
+     * stancl persists the generated name to data->tenancy_db_name when the
+     * tenant is created, so the database name stays put even if the slug is
+     * later renamed. MySQL caps identifiers at 64 characters.
+     */
+    protected function nameTenantDatabasesBySlug(): void
+    {
+        DatabaseConfig::generateDatabaseNamesUsing(function (TenantWithDatabase $tenant): string {
+            $slug = Str::of((string) $tenant->getAttribute('slug'))
+                ->replace('-', '_')
+                ->replaceMatches('/[^a-z0-9_]/i', '')
+                ->limit(50, '')
+                ->toString();
+
+            if ($slug === '') {
+                $slug = 't' . str_replace('-', '_', (string) $tenant->getTenantKey());
+            }
+
+            return config('tenancy.database.prefix') . $slug . config('tenancy.database.suffix');
+        });
     }
 
     protected function bootEvents()
@@ -118,31 +141,10 @@ class TenancyServiceProvider extends ServiceProvider
         }
     }
 
-    protected function mapRoutes()
-    {
-        $this->app->booted(function () {
-            if (file_exists(base_path('routes/tenant.php'))) {
-                Route::namespace(static::$controllerNamespace)
-                    ->group(base_path('routes/tenant.php'));
-            }
-        });
-    }
-
-    protected function makeTenancyMiddlewareHighestPriority()
-    {
-        $tenancyMiddleware = [
-            // Even higher priority than the initialization middleware
-            Middleware\PreventAccessFromCentralDomains::class,
-
-            Middleware\InitializeTenancyByDomain::class,
-            Middleware\InitializeTenancyBySubdomain::class,
-            Middleware\InitializeTenancyByDomainOrSubdomain::class,
-            Middleware\InitializeTenancyByPath::class,
-            Middleware\InitializeTenancyByRequestData::class,
-        ];
-
-        foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);
-        }
-    }
+    /*
+     | routes/tenant.php and stancl's host-based InitializeTenancyBy* middleware
+     | are deliberately absent: tenants are identified by the domain part of the
+     | login email, and App\Http\Middleware\InitializeTenancyFromSession handles
+     | every subsequent request. Its ordering is pinned in bootstrap/app.php.
+     */
 }
