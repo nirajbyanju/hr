@@ -20,6 +20,7 @@ use App\Modules\Employees\Http\Controllers\EmployeeResignationController;
 use App\Modules\Holidays\Http\Controllers\HolidayController;
 use App\Modules\IdCards\Http\Controllers\AttendanceScanController;
 use App\Modules\IdCards\Http\Controllers\IdCardController;
+use App\Modules\IdCards\Http\Controllers\MyIdCardController;
 use App\Modules\Leaves\Http\Controllers\LeaveApplicationController;
 use App\Modules\Leaves\Http\Controllers\LeaveBalanceController;
 use App\Modules\Leaves\Http\Controllers\LeaveCategoryController;
@@ -147,6 +148,14 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
         Route::get('/{card}/pdf', [IdCardController::class, 'pdf'])->middleware('permission:id_card.print,id_card.manage')->name('pdf');
         Route::post('/{card}/revoke', [IdCardController::class, 'revoke'])->middleware('permission:id_card.manage')->name('revoke');
     });
+
+    /*
+     | Self-service: an employee's own ID card. No id_card.* permission and no
+     | route parameter — the card is derived from the signed-in user, so an
+     | employee can only ever reach their own.
+     */
+    Route::get('my/id-card', [MyIdCardController::class, 'show'])->name('my.id-card');
+    Route::get('my/id-card/pdf', [MyIdCardController::class, 'pdf'])->name('my.id-card.pdf');
 
     Route::prefix('announcements')->name('announcements.')->group(function (): void {
         Route::get('/', [AnnouncementController::class, 'index'])->name('index');

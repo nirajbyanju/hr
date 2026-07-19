@@ -17,16 +17,18 @@ class TenantProvisioningService
     public function create(
         string $name,
         string $slug,
+        string $domain,
         string $adminEmail,
         string $adminPassword,
         ?string $startsOn = null,
         ?string $expiresOn = null
     ): Company
     {
-        return DB::transaction(function () use ($name, $slug, $adminEmail, $adminPassword, $startsOn, $expiresOn): Company {
+        return DB::transaction(function () use ($name, $slug, $domain, $adminEmail, $adminPassword, $startsOn, $expiresOn): Company {
             $company = Company::query()->create([
                 'name' => $name,
                 'slug' => $slug,
+                'domain' => $domain,
                 'status' => 'active',
                 'starts_on' => $startsOn,
                 'expires_on' => $expiresOn,

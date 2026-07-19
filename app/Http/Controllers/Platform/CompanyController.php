@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -22,13 +23,63 @@ use Illuminate\View\View;
 
 class CompanyController extends Controller
 {
-    /** Slugs that cannot be used (central / reserved subdomains). */
+    /**
+     * A company domain: at least two dot-separated labels, each starting and
+     * ending alphanumeric. "ktm.com" passes, "ktm" and "-ktm.com" do not.
+     */
+    private const DOMAIN_REGEX = '/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/';
+
+    /** Slugs reserved for the platform itself. */
     private function reservedSlugs(): array
     {
-        return array_merge(
-            (array) config('tenancy.central_subdomains', []),
-            [(string) config('tenancy.default_slug', 'default')]
-        );
+        return [(string) config('tenancy.default_slug', 'default')];
+    }
+
+    /**
+     * The slug is now an internal identifier only — it is derived from the name
+     * rather than entered, and stays stable for the life of the company.
+     */
+    private function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'company';
+        $slug = $base;
+        $suffix = 2;
+
+        while (in_array($slug, $this->reservedSlugs(), true)
+            || Company::query()->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $suffix++;
+        }
+
+        return $slug;
+    }
+
+    /** Normalise the submitted domain before it is validated or stored. */
+    private function normaliseDomain(Request $request): void
+    {
+        if ($request->has('domain')) {
+            $request->merge([
+                'domain' => Str::lower(trim((string) $request->input('domain'))),
+            ]);
+        }
+    }
+
+    /**
+     * The admin has to be reachable at the company domain, otherwise the
+     * account we create could never resolve a tenant at login.
+     */
+    private function assertAdminEmailMatchesDomain(?string $email, string $domain): void
+    {
+        if ($email === null || $email === '') {
+            return;
+        }
+
+        if (Company::domainFromEmail($email) !== $domain) {
+            throw ValidationException::withMessages([
+                'admin_email' => __('The admin email must use the company domain (@:domain).', [
+                    'domain' => $domain,
+                ]),
+            ]);
+        }
     }
 
     public function create(): View
@@ -38,24 +89,30 @@ class CompanyController extends Controller
 
     public function store(Request $request, TenantProvisioningService $provisioning): RedirectResponse
     {
+        $this->normaliseDomain($request);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'slug' => [
-                'required', 'string', 'max:63',
-                'regex:/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/',
-                Rule::notIn($this->reservedSlugs()),
-                'unique:companies,slug',
+            'domain' => [
+                'required', 'string', 'max:255',
+                'regex:' . self::DOMAIN_REGEX,
+                'unique:companies,domain',
             ],
             'starts_on' => ['nullable', 'date'],
             'expires_on' => ['nullable', 'date'],
             'admin_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'admin_password' => ['required', 'confirmed', Password::defaults()],
-        ], [], ['admin_email' => 'admin email', 'admin_password' => 'admin password']);
+        ], [
+            'domain.regex' => __('Enter a full domain such as ktm.com.'),
+        ], ['admin_email' => 'admin email', 'admin_password' => 'admin password']);
+
         $this->validateLifecycleDates($data);
+        $this->assertAdminEmailMatchesDomain($data['admin_email'], $data['domain']);
 
         $company = $provisioning->create(
             $data['name'],
-            $data['slug'],
+            $this->uniqueSlug($data['name']),
+            $data['domain'],
             $data['admin_email'],
             $data['admin_password'],
             $data['starts_on'] ?? null,
@@ -63,9 +120,9 @@ class CompanyController extends Controller
         );
 
         return redirect()->route('platform.dashboard')
-            ->with('success', __("Company ':name' created at :host", [
+            ->with('success', __("Company ':name' created. Staff sign in with @:domain email addresses.", [
                 'name' => $company->name,
-                'host' => $company->slug . '.' . config('tenancy.domain'),
+                'domain' => $company->domain,
             ]));
     }
 
@@ -80,16 +137,17 @@ class CompanyController extends Controller
 
     public function update(Request $request, Company $company): RedirectResponse
     {
-        $isDefault = $company->slug === config('tenancy.default_slug');
+        $isDefault = $company->isDefault();
         $adminUser = $this->companyAdmin($company);
+
+        $this->normaliseDomain($request);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'slug' => [
-                'required', 'string', 'max:63',
-                'regex:/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/',
-                Rule::notIn(array_diff($this->reservedSlugs(), [$company->slug])),
-                Rule::unique('companies', 'slug')->ignore($company->id),
+            'domain' => [
+                'required', 'string', 'max:255',
+                'regex:' . self::DOMAIN_REGEX,
+                Rule::unique('companies', 'domain')->ignore($company->id),
             ],
             'status' => ['required', Rule::in(['active', 'suspended'])],
             'starts_on' => ['nullable', 'date'],
@@ -101,19 +159,22 @@ class CompanyController extends Controller
                 Rule::unique('users', 'email')->ignore($adminUser?->id),
             ],
             'admin_password' => ['nullable', 'confirmed', Password::defaults()],
+        ], [
+            'domain.regex' => __('Enter a full domain such as ktm.com.'),
         ]);
+
         $this->validateLifecycleDates($data);
+        $this->assertAdminEmailMatchesDomain($data['admin_email'] ?? null, $data['domain']);
 
         // Never lock everyone out of the fallback company.
         if ($isDefault) {
-            $data['slug'] = $company->slug;
             $data['status'] = 'active';
         }
 
         DB::transaction(function () use ($company, $data, $adminUser): void {
             $company->update([
                 'name' => $data['name'],
-                'slug' => $data['slug'],
+                'domain' => $data['domain'],
                 'status' => $data['status'],
                 'starts_on' => $data['starts_on'] ?? null,
                 'expires_on' => $data['expires_on'] ?? null,
@@ -141,7 +202,7 @@ class CompanyController extends Controller
 
     public function toggleStatus(Company $company): RedirectResponse
     {
-        if ($company->slug === config('tenancy.default_slug')) {
+        if ($company->isDefault()) {
             return back()->with('error', __('The default company cannot be suspended.'));
         }
 
@@ -157,7 +218,7 @@ class CompanyController extends Controller
 
     public function destroy(Company $company): RedirectResponse
     {
-        if ($company->slug === config('tenancy.default_slug')) {
+        if ($company->isDefault()) {
             return back()->with('error', __('The default company cannot be deleted.'));
         }
 

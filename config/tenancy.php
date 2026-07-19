@@ -91,9 +91,12 @@ return [
     |--------------------------------------------------------------------------
     | Read by App\Http\Middleware\IdentifyTenant and the platform console while
     | the app is migrated from shared-DB (company_id) to database-per-tenant.
+    |
+    | Tenants are identified by the domain part of the login email
+    | (nirajbyanju@ktm.com => the company whose `domain` is "ktm.com"), so there
+    | is no subdomain/host parsing and no central_subdomains list.
     */
-    'domain' => env('TENANCY_DOMAIN', 'localhost'),
-    'central_subdomains' => ['www', 'app', 'admin', 'api', 'mail'],
     'default_slug' => env('TENANCY_DEFAULT_SLUG', 'default'),
+    'default_domain' => env('TENANCY_DEFAULT_DOMAIN', 'samriddhihr.local'),
     'allow_dev_override' => (bool) env('TENANCY_DEV_OVERRIDE', env('APP_ENV') === 'local'),
 ];

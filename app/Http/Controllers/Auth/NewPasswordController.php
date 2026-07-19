@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\ResolvesTenantFromEmail;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,8 @@ use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
+    use ResolvesTenantFromEmail;
+
     public function create(Request $request): View
     {
         return view('auth.reset-password', [
@@ -30,6 +33,12 @@ class NewPasswordController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        if ($this->activateTenantForEmail($request->string('email')->value()) === null) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'email' => [__(Password::INVALID_USER)],
+            ]);
+        }
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),

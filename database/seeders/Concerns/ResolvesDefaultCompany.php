@@ -18,6 +18,9 @@ trait ResolvesDefaultCompany
             ['slug' => config('tenancy.default_slug', 'default')],
             [
                 'name' => config('app.name', 'SamriddhiHR'),
+                // Tenants are resolved from the login email's domain, so the
+                // default company needs one for its seeded accounts to log in.
+                'domain' => config('tenancy.default_domain', 'samriddhihr.local'),
                 'status' => 'active',
             ]
         );

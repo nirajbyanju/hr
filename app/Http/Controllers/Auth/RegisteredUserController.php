@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\ResolvesTenantFromEmail;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -9,10 +10,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    use ResolvesTenantFromEmail;
+
     public function create(): View
     {
         return view('auth.register');
@@ -26,6 +30,15 @@ class RegisteredUserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // The email domain decides which company the signup belongs to. Without
+        // a tenant active the BelongsToTenant creating-hook would leave
+        // company_id null and the account would belong to nobody.
+        if ($this->activateTenantForEmail($validated['email']) === null) {
+            throw ValidationException::withMessages([
+                'email' => __('No company is registered for this email domain.'),
+            ]);
+        }
 
         $user = User::create([
             'name' => $validated['name'],

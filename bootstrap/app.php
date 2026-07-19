@@ -12,16 +12,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(prepend: [
-            \App\Http\Middleware\IdentifyTenant::class,
-        ]);
-
-        // dev-only tenant selector cookie (see IdentifyTenant) — read as plaintext.
-        $middleware->encryptCookies(except: ['dev_tenant']);
-
         $middleware->web(append: [
+            \App\Http\Middleware\IdentifyTenant::class,
             \App\Http\Middleware\SetLocale::class,
         ]);
+
+        // IdentifyTenant reads the session to resolve the signed-in user's
+        // company, so it must run after StartSession. It must also run before
+        // SubstituteBindings: route-model bindings resolve through the tenant
+        // global scope, and binding first would let a user load another
+        // tenant's record by id.
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\IdentifyTenant::class,
+        );
 
         $middleware->alias([
             'role.any' => \App\Http\Middleware\EnsureUserHasAnyRole::class,

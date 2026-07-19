@@ -6,14 +6,26 @@ use App\Models\Company;
 use App\Tenancy\Tenancy;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Resolves the active tenant for each web request:
- *   1. ?tenant= / X-Tenant override (local/dev only)
- *   2. the request subdomain (acme.example.com => "acme")
- *   3. the configured default company (single-company installs / central host)
+ *   1. the platform (landlord) console always runs in the default context
+ *   2. the signed-in user's own company
+ *   3. ?tenant= / X-Tenant override (local/dev only)
+ *   4. no tenant — a guest on the login page has not identified one yet
+ *
+ * Guests are identified by the domain part of the email they submit, which
+ * AuthenticatedSessionController resolves before authenticating. Once signed
+ * in, the user record itself is the source of truth, so the tenant can never
+ * drift out of sync with the session.
+ *
+ * Ordering matters: this must run after StartSession (it reads the session to
+ * resolve the user) and before SubstituteBindings (route-model bindings resolve
+ * through the tenant global scope, so binding first would expose other tenants'
+ * records by id). See bootstrap/app.php.
  */
 class IdentifyTenant
 {
@@ -21,14 +33,12 @@ class IdentifyTenant
     {
         $company = $this->resolve($request);
 
-        if ($company !== null && ! $company->isActive() && ! $request->is('platform', 'platform/*')) {
-            $message = match (true) {
-                $company->isExpired() => __('This company account has expired. Please contact support.'),
-                $company->isPending() => __('This company account is not active yet. Please contact support.'),
-                default => __('This company account is suspended. Please contact support.'),
-            };
+        if ($company !== null && ! $request->is('platform', 'platform/*')) {
+            $reason = $company->inactiveReason();
 
-            abort(403, $message);
+            if ($reason !== null) {
+                abort(403, $reason);
+            }
         }
 
         if ($company !== null) {
@@ -41,46 +51,31 @@ class IdentifyTenant
     private function resolve(Request $request): ?Company
     {
         try {
-            // The platform (landlord) console always runs in the default/central
-            // context so the super-admin is resolvable regardless of any override.
+            // The platform console always runs in the default/central context so
+            // the super-admin is resolvable regardless of which company they
+            // belong to or any dev override that may be set.
             if ($request->is('platform', 'platform/*')) {
                 return $this->defaultCompany();
             }
 
-            if (config('tenancy.allow_dev_override')) {
-                $explicit = $request->query('tenant') ?? $request->header('X-Tenant');
+            if (Auth::hasUser() || Auth::check()) {
+                $company = $this->companyForUser();
 
-                if ($explicit !== null) {
-                    // Remember the selection in a cookie so it survives the
-                    // post-login redirect on plain localhost — no subdomain/DNS
-                    // needed to test a tenant in development.
-                    if ($explicit === '') {
-                        Cookie::queue(Cookie::forget('dev_tenant'));
-                    } else {
-                        Cookie::queue('dev_tenant', $explicit, 120);
-                        $company = Company::query()->where('slug', $explicit)->first();
-                        if ($company !== null) {
-                            return $company;
-                        }
-                    }
-                } elseif (is_string($cookie = $request->cookie('dev_tenant')) && $cookie !== '') {
-                    $company = Company::query()->where('slug', $cookie)->first();
-                    if ($company !== null) {
-                        return $company;
-                    }
-                }
-            }
-
-            $subdomain = $this->subdomain($request->getHost());
-
-            if ($subdomain !== null && ! in_array($subdomain, config('tenancy.central_subdomains', []), true)) {
-                $company = Company::query()->where('slug', $subdomain)->first();
                 if ($company !== null) {
                     return $company;
                 }
             }
 
-            return $this->defaultCompany();
+            if (config('tenancy.allow_dev_override')) {
+                $company = $this->devOverride($request);
+
+                if ($company !== null) {
+                    return $company;
+                }
+            }
+
+            // Guest: the tenant is not known until an email is submitted.
+            return null;
         } catch (\Throwable) {
             // Tenancy tables not migrated yet (fresh install / early boot) — run
             // without a tenant rather than failing the request.
@@ -88,15 +83,43 @@ class IdentifyTenant
         }
     }
 
-    private function subdomain(string $host): ?string
+    private function companyForUser(): ?Company
     {
-        $domain = (string) config('tenancy.domain');
+        $companyId = Auth::user()?->company_id;
 
-        if ($host === $domain || ! str_ends_with($host, '.' . $domain)) {
-            return null;
+        return $companyId === null
+            ? null
+            : Company::query()->find($companyId);
+    }
+
+    /**
+     * Development-only tenant selector, so a tenant can be exercised locally
+     * without creating a user for it first. The selection is remembered in a
+     * cookie so it survives redirects.
+     */
+    private function devOverride(Request $request): ?Company
+    {
+        $explicit = $request->query('tenant') ?? $request->header('X-Tenant');
+
+        if ($explicit !== null) {
+            if ($explicit === '') {
+                Cookie::queue(Cookie::forget('dev_tenant'));
+
+                return null;
+            }
+
+            Cookie::queue('dev_tenant', $explicit, 120);
+
+            return Company::query()->where('slug', $explicit)->first();
         }
 
-        return substr($host, 0, -1 * (strlen($domain) + 1));
+        $cookie = $request->cookie('dev_tenant');
+
+        if (is_string($cookie) && $cookie !== '') {
+            return Company::query()->where('slug', $cookie)->first();
+        }
+
+        return null;
     }
 
     private function defaultCompany(): ?Company

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\ResolvesTenantFromEmail;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,8 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    use ResolvesTenantFromEmail;
+
     public function create(): View
     {
         return view('auth.login');
@@ -29,6 +32,24 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         $this->ensureIsNotRateLimited($request);
+
+        // The company is identified by the domain part of the email
+        // (nirajbyanju@ktm.com => ktm.com). This has to happen before
+        // Auth::attempt: User is tenant-scoped, so without an active tenant the
+        // credential lookup would search users across every company.
+        $company = $this->activateTenantForEmail($credentials['email']);
+
+        if ($company === null) {
+            RateLimiter::hit($this->throttleKey($request));
+
+            throw ValidationException::withMessages([
+                'email' => __('No company is registered for this email domain.'),
+            ]);
+        }
+
+        if (($reason = $company->inactiveReason()) !== null) {
+            throw ValidationException::withMessages(['email' => $reason]);
+        }
 
         $remember = $request->boolean('remember');
 

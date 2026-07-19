@@ -27,7 +27,7 @@
                 <thead>
                     <tr>
                         <th>Company</th>
-                        <th>Subdomain</th>
+                        <th>Domain</th>
                         <th>Status</th>
                         <th>Start date</th>
                         <th>Expiry date</th>
@@ -38,13 +38,13 @@
                 </thead>
                 <tbody>
                     @foreach($companies as $company)
-                        @php($isDefault = $company->slug === $defaultSlug)
+                        @php($isDefault = $company->isDefault())
                         <tr>
                             <td>
                                 <div class="co-name">{{ $company->name }}</div>
                                 @if($isDefault)<span class="pill pill-default">Default</span>@endif
                             </td>
-                            <td><span class="co-host">{{ $company->slug }}.{{ $tenancyDomain }}</span></td>
+                            <td><span class="co-host">{{ $company->domain ?? '—' }}</span></td>
                             <td>
                                 @if($company->isExpired())
                                     <span class="pill pill-expired">Expired</span>

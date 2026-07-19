@@ -38,8 +38,6 @@ class DashboardController extends Controller
             'userCounts' => $userCounts,
             'employeeCounts' => $employeeCounts,
             'stats' => $stats,
-            'defaultSlug' => config('tenancy.default_slug', 'default'),
-            'tenancyDomain' => config('tenancy.domain', 'localhost'),
         ]);
     }
 }
