@@ -79,6 +79,7 @@ Route::prefix('platform')->name('platform.')->group(function (): void {
     Route::middleware('auth:central')->group(function (): void {
         Route::post('logout', [PlatformAuthController::class, 'destroy'])->name('logout');
         Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+        Route::post('stats/refresh', [PlatformDashboardController::class, 'refreshStats'])->name('stats.refresh');
         Route::get('companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');
         Route::post('companies', [PlatformCompanyController::class, 'store'])->name('companies.store');
         Route::get('companies/{company}/edit', [PlatformCompanyController::class, 'edit'])->name('companies.edit');

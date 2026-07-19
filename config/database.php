@@ -66,11 +66,16 @@ return [
 
         /*
          | Template for per-tenant connections. stancl clones this and fills in
-         | `database` with the tenant's own database name at runtime; it is never
-         | used directly with a null database. Declared explicitly so tenant
-         | connections do not silently inherit changes made to `mysql`.
+         | `database` with the tenant's own database name at runtime.
+         |
+         | It must NOT be called `tenant`: stancl hardcodes that name for the
+         | live tenant connection, and purgeTenantConnection() does
+         | `unset(config['database.connections.tenant'])` between tenants. A
+         | template stored under that key gets deleted on the first switch, and
+         | the next resolve fails with "Database manager for driver  is not
+         | registered".
          */
-        'tenant' => [
+        'tenant_template' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),

@@ -24,9 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // One tenant context per request, shared by the middleware and the
-        // BelongsToTenant global scope.
-        $this->app->singleton(\App\Tenancy\Tenancy::class);
+        //
     }
 
     /**

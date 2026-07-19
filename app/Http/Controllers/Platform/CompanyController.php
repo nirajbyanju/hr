@@ -3,17 +3,11 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
-use App\Models\Announcement;
 use App\Models\Company;
-use App\Models\Department;
-use App\Models\Designation;
-use App\Models\Employee;
-use App\Models\Holiday;
 use App\Models\User;
 use App\Tenancy\TenantProvisioningService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -30,14 +24,16 @@ class CompanyController extends Controller
     private const DOMAIN_REGEX = '/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/';
 
     /** Slugs reserved for the platform itself. */
+    /** Slugs that would collide with a MySQL system database. */
     private function reservedSlugs(): array
     {
-        return [(string) config('tenancy.default_slug', 'default')];
+        return ['mysql', 'information_schema', 'performance_schema', 'sys'];
     }
 
     /**
-     * The slug is now an internal identifier only — it is derived from the name
-     * rather than entered, and stays stable for the life of the company.
+     * The slug is an internal identifier, derived from the name rather than
+     * entered. It also becomes the tenant's database name
+     * (tenant_<slug>), so it stays stable for the life of the company.
      */
     private function uniqueSlug(string $name): string
     {
@@ -100,7 +96,9 @@ class CompanyController extends Controller
             ],
             'starts_on' => ['nullable', 'date'],
             'expires_on' => ['nullable', 'date'],
-            'admin_email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            // No unique:users rule — `users` lives in the tenant database,
+            // which does not exist yet, and the new tenant's is empty anyway.
+            'admin_email' => ['required', 'email', 'max:255'],
             'admin_password' => ['required', 'confirmed', Password::defaults()],
         ], [
             'domain.regex' => __('Enter a full domain such as ktm.com.'),
@@ -137,9 +135,6 @@ class CompanyController extends Controller
 
     public function update(Request $request, Company $company): RedirectResponse
     {
-        $isDefault = $company->isDefault();
-        $adminUser = $this->companyAdmin($company);
-
         $this->normaliseDomain($request);
 
         $data = $request->validate([
@@ -147,17 +142,14 @@ class CompanyController extends Controller
             'domain' => [
                 'required', 'string', 'max:255',
                 'regex:' . self::DOMAIN_REGEX,
-                Rule::unique('companies', 'domain')->ignore($company->id),
+                Rule::unique('companies', 'domain')->ignore($company->getKey(), $company->getKeyName()),
             ],
             'status' => ['required', Rule::in(['active', 'suspended'])],
             'starts_on' => ['nullable', 'date'],
             'expires_on' => ['nullable', 'date'],
-            'admin_email' => [
-                'nullable',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($adminUser?->id),
-            ],
+            // Uniqueness of admin_email is checked inside the tenant database
+            // below; a validation rule here would query central.
+            'admin_email' => ['nullable', 'email', 'max:255'],
             'admin_password' => ['nullable', 'confirmed', Password::defaults()],
         ], [
             'domain.regex' => __('Enter a full domain such as ktm.com.'),
@@ -166,46 +158,56 @@ class CompanyController extends Controller
         $this->validateLifecycleDates($data);
         $this->assertAdminEmailMatchesDomain($data['admin_email'] ?? null, $data['domain']);
 
-        // Never lock everyone out of the fallback company.
-        if ($isDefault) {
-            $data['status'] = 'active';
-        }
+        // Every read AND write of a tenant model has to happen inside run().
+        // A model fetched inside run() but saved outside resolves its
+        // connection at save time — by then the default is central again, and
+        // the write would land in the wrong database.
+        $company->run(function () use ($data): void {
+            $adminUser = $this->findTenantAdmin();
 
-        DB::transaction(function () use ($company, $data, $adminUser): void {
-            $company->update([
-                'name' => $data['name'],
-                'domain' => $data['domain'],
-                'status' => $data['status'],
-                'starts_on' => $data['starts_on'] ?? null,
-                'expires_on' => $data['expires_on'] ?? null,
-            ]);
+            if ($adminUser === null) {
+                return;
+            }
 
-            if ($adminUser !== null) {
-                $adminUpdates = [];
+            $adminUpdates = [];
 
-                if (! empty($data['admin_email'])) {
-                    $adminUpdates['email'] = $data['admin_email'];
+            if (! empty($data['admin_email'])) {
+                $clash = User::query()
+                    ->where('email', $data['admin_email'])
+                    ->whereKeyNot($adminUser->getKey())
+                    ->exists();
+
+                if ($clash) {
+                    throw ValidationException::withMessages([
+                        'admin_email' => __('That email is already used inside this company.'),
+                    ]);
                 }
 
-                if (! empty($data['admin_password'])) {
-                    $adminUpdates['password'] = Hash::make($data['admin_password']);
-                }
+                $adminUpdates['email'] = $data['admin_email'];
+            }
 
-                if ($adminUpdates !== []) {
-                    $adminUser->forceFill($adminUpdates)->save();
-                }
+            if (! empty($data['admin_password'])) {
+                $adminUpdates['password'] = Hash::make($data['admin_password']);
+            }
+
+            if ($adminUpdates !== []) {
+                $adminUser->forceFill($adminUpdates)->save();
             }
         });
+
+        $company->update([
+            'name' => $data['name'],
+            'domain' => $data['domain'],
+            'status' => $data['status'],
+            'starts_on' => $data['starts_on'] ?? null,
+            'expires_on' => $data['expires_on'] ?? null,
+        ]);
 
         return redirect()->route('platform.dashboard')->with('success', __('Company updated.'));
     }
 
     public function toggleStatus(Company $company): RedirectResponse
     {
-        if ($company->isDefault()) {
-            return back()->with('error', __('The default company cannot be suspended.'));
-        }
-
         $company->update([
             'status' => $company->status === 'active' ? 'suspended' : 'active',
         ]);
@@ -218,37 +220,48 @@ class CompanyController extends Controller
 
     public function destroy(Company $company): RedirectResponse
     {
-        if ($company->isDefault()) {
-            return back()->with('error', __('The default company cannot be deleted.'));
+        $name = $company->name;
+
+        // Deleting the tenant fires TenantDeleted, which DROPs its database —
+        // that is the entire teardown. End tenancy first so we are not holding
+        // an open connection to the database being dropped.
+        if (tenancy()->initialized) {
+            tenancy()->end();
         }
 
-        DB::transaction(function () use ($company): void {
-            $id = $company->id;
-
-            // Remove the tenant's scoped data. Employee force-deletes cascade to
-            // their attendance / payroll / id-card rows via existing FKs.
-            Employee::query()->withoutGlobalScope('tenant')->where('company_id', $id)->forceDelete();
-            Designation::query()->withoutGlobalScope('tenant')->where('company_id', $id)->forceDelete();
-            Department::query()->withoutGlobalScope('tenant')->where('company_id', $id)->forceDelete();
-            Announcement::query()->withoutGlobalScope('tenant')->where('company_id', $id)->forceDelete();
-            Holiday::query()->withoutGlobalScope('tenant')->where('company_id', $id)->delete();
-            User::query()->withoutGlobalScope('tenant')->where('company_id', $id)->delete();
-
-            $company->delete();
-        });
+        $company->delete();
 
         return redirect()->route('platform.dashboard')
-            ->with('success', __("Company ':name' and its data were deleted.", ['name' => $company->name]));
+            ->with('success', __("Company ':name' and its database were deleted.", ['name' => $name]));
     }
 
-    private function companyAdmin(Company $company): ?User
+    /** Must be called from inside $company->run(). */
+    private function findTenantAdmin(): ?User
     {
         return User::query()
-            ->withoutGlobalScope('tenant')
-            ->where('company_id', $company->id)
             ->whereHas('roles', fn ($query) => $query->where('slug', 'admin'))
             ->orderBy('id')
             ->first();
+    }
+
+    /**
+     * The company's admin user, read from inside the tenant database.
+     * Returns null if the tenant database is unreachable (e.g. a provisioning
+     * failure left it missing) so the console still renders.
+     */
+    private function companyAdmin(Company $company): ?User
+    {
+        if ($company->status === 'provisioning') {
+            return null;
+        }
+
+        try {
+            return $company->run(fn () => $this->findTenantAdmin());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     /**

@@ -24,21 +24,24 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // Resolve the tenant BEFORE the rules that touch the database. The
+        // `unique:users` rule below builds its query from the default
+        // connection, and until we switch that is central — which has no
+        // `users` table.
+        $email = $request->string('email')->lower()->trim()->value();
+
+        if ($this->activateTenantForEmail($email) === null) {
+            throw ValidationException::withMessages([
+                'email' => __('No company is registered for this email domain.'),
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
-        // The email domain decides which company the signup belongs to. Without
-        // a tenant active the BelongsToTenant creating-hook would leave
-        // company_id null and the account would belong to nobody.
-        if ($this->activateTenantForEmail($validated['email']) === null) {
-            throw ValidationException::withMessages([
-                'email' => __('No company is registered for this email domain.'),
-            ]);
-        }
 
         $user = User::create([
             'name' => $validated['name'],

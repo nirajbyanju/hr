@@ -37,7 +37,10 @@ return [
 
     'database' => [
         'central_connection' => env('DB_CONNECTION', 'mysql'),
-        'template_tenant_connection' => 'tenant',
+        // NOT 'tenant' — see the note on the connection itself in
+        // config/database.php. stancl reserves that name for the live tenant
+        // connection and unsets it between tenants.
+        'template_tenant_connection' => 'tenant_template',
 
         // Tenant database name = prefix + slug (e.g. "tenant_ktm_group"). The
         // name is derived from the slug rather than the UUID by
@@ -69,7 +72,11 @@ return [
             'public' => '%storage_path%/app/public/',
         ],
         'suffix_storage_path' => true,
-        'asset_helper_tenancy' => true,
+
+        // Requires stancl's `stancl.tenancy.asset` route, which only exists
+        // when tenancy.routes is true. We serve assets from the central public
+        // directory as normal, so this stays off.
+        'asset_helper_tenancy' => false,
     ],
 
     'redis' => [

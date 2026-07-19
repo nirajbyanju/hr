@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Company;
-use App\Models\User;
 use App\Tenancy\TenantProvisioningService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -42,31 +41,29 @@ class CreateTenantCommand extends Command
             return self::FAILURE;
         }
 
-        // Phase 1: emails are still globally unique (per-company uniqueness lands
-        // with the MySQL move), so guard across all tenants.
-        if (User::query()->withoutGlobalScope('tenant')->where('email', $email)->exists()) {
-            $this->error("A user with email {$email} already exists.");
+        // No cross-tenant email check: emails are unique per tenant database
+        // now, and the unique index on companies.domain plus the domain match
+        // above already make a cross-tenant collision impossible.
+        $this->line('Provisioning database, running migrations and seeding...');
 
-            return self::FAILURE;
-        }
-
-        $provisioning->create($name, $this->uniqueSlug($name), $domain, $email, $password);
+        $company = $provisioning->create($name, $this->uniqueSlug($name), $domain, $email, $password);
 
         $this->info("Company '{$name}' created.");
         $this->line('  Domain    : ' . $domain);
+        $this->line('  Database  : ' . $company->getAttribute('tenancy_db_name'));
         $this->line('  Admin     : ' . $email);
         $this->line('  Password  : ' . $password);
 
         return self::SUCCESS;
     }
 
-    /** The slug is an internal identifier, derived from the name. */
+    /** The slug is an internal identifier, and also the tenant database name. */
     private function uniqueSlug(string $name): string
     {
         $base = Str::slug($name) ?: 'company';
         $slug = $base;
         $suffix = 2;
-        $reserved = [(string) config('tenancy.default_slug', 'default')];
+        $reserved = ['mysql', 'information_schema', 'performance_schema', 'sys'];
 
         while (in_array($slug, $reserved, true) || Company::query()->where('slug', $slug)->exists()) {
             $slug = $base . '-' . $suffix++;

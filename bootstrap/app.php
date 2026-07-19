@@ -13,18 +13,23 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\IdentifyTenant::class,
+            \App\Http\Middleware\InitializeTenancyFromSession::class,
             \App\Http\Middleware\SetLocale::class,
         ]);
 
-        // IdentifyTenant reads the session to resolve the signed-in user's
-        // company, so it must run after StartSession. It must also run before
-        // SubstituteBindings: route-model bindings resolve through the tenant
-        // global scope, and binding first would let a user load another
-        // tenant's record by id.
+        // Ordering is load-bearing. This must run:
+        //   - AFTER StartSession, because it reads the tenant id from the session
+        //   - BEFORE Authenticate, because resolving the signed-in user reads the
+        //     `users` table, which only exists in the tenant database
+        //   - BEFORE SubstituteBindings, because route-model bindings resolve
+        //     against the default connection
+        // Pinned against the AuthenticatesRequests CONTRACT, not the Authenticate
+        // class: only the contract appears in Laravel's default priority list, and
+        // pinning against a class that is absent from that list silently does
+        // nothing (the middleware then falls back to plain group order).
         $middleware->prependToPriorityList(
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\IdentifyTenant::class,
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            \App\Http\Middleware\InitializeTenancyFromSession::class,
         );
 
         // Without this, an expired session on /platform/* would redirect the

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Auth\Concerns\ResolvesTenantFromEmail;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\InitializeTenancyFromSession;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,8 +36,9 @@ class AuthenticatedSessionController extends Controller
 
         // The company is identified by the domain part of the email
         // (nirajbyanju@ktm.com => ktm.com). This has to happen before
-        // Auth::attempt: User is tenant-scoped, so without an active tenant the
-        // credential lookup would search users across every company.
+        // Auth::attempt: users live in per-tenant databases, so without
+        // switching first the credential lookup would run against the central
+        // database, which has no `users` table.
         $company = $this->activateTenantForEmail($credentials['email']);
 
         if ($company === null) {
@@ -78,6 +80,14 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+
+        // Every subsequent request re-establishes the tenant from this, via
+        // InitializeTenancyFromSession. Written after regenerate() so there is
+        // no doubt it survives the session-fixation guard.
+        $request->session()->put(
+            InitializeTenancyFromSession::SESSION_KEY,
+            $company->getTenantKey()
+        );
 
         return redirect()->intended(route('dashboard'));
     }

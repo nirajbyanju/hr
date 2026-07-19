@@ -3,7 +3,6 @@
 @section('title', $mode === 'create' ? 'Add company' : 'Edit company')
 
 @section('content')
-    @php($isDefault = $company->exists && $company->isDefault())
     <div class="page-head">
         <div>
             <h1>{{ $mode === 'create' ? 'Add company' : 'Edit ' . $company->name }}</h1>
@@ -47,12 +46,11 @@
                     <label class="field">
                         <span class="lab">Status</span>
                         @php($status = old('status', $company->status))
-                        <select class="input" name="status" {{ $isDefault ? 'disabled' : '' }}>
+                        <select class="input" name="status">
                             <option value="active" {{ $status === 'active' ? 'selected' : '' }}>Active</option>
                             <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>Suspended (block login)</option>
                         </select>
-                        @if($isDefault)<input type="hidden" name="status" value="active">@endif
-                        @if($isDefault)<div class="help">The default company is always active and cannot be suspended.</div>@endif
+                        <div class="help">Suspending signs out anyone currently logged in to this company.</div>
                         @error('status')<div class="err">{{ $message }}</div>@enderror
                     </label>
                 @endif

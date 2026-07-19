@@ -10,12 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Tenancy\BelongsToTenant;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use BelongsToTenant;
     use HasFactory, Notifiable;
 
     /**
@@ -31,7 +29,6 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'company_id',
         'name',
         'email',
         'phone',
