@@ -35,7 +35,7 @@
     </form>
 
     <div class="login-footer">
-        <a href="{{ route('password.request') }}">Forgot Password</a> | <a href="{{ route('register') }}">Register</a>
+        <a href="{{ route('password.request') }}">Forgot Password</a>
     </div>
 
 @endsection
