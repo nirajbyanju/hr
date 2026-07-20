@@ -1,0 +1,150 @@
+/**
+ * Styles for <x-date-field>. Self-contained and scoped to .date-field so it
+ * sits inside the existing Bootstrap form markup without touching it.
+ */
+
+.date-field {
+    position: relative;
+    display: block;
+}
+
+.date-field__display {
+    padding-right: 38px;
+}
+
+.date-field__toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 4px;
+    opacity: .65;
+}
+
+.date-field__toggle:hover { opacity: 1; }
+
+.date-field__note {
+    display: block;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: #8a95a1;
+    min-height: 14px;
+}
+
+/* ---- Panel ---- */
+
+.date-field__panel {
+    position: absolute;
+    z-index: 1080;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 268px;
+    background: #fff;
+    border: 1px solid #e2e6ea;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(20, 24, 29, .14);
+    padding: 12px;
+    user-select: none;
+}
+
+/* Flip to the right edge when the field sits near the viewport edge. */
+@media (max-width: 400px) {
+    .date-field__panel { left: auto; right: 0; width: 252px; }
+}
+
+.date-field__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.date-field__title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #14181d;
+}
+
+.date-field__nav {
+    border: 1px solid #e2e6ea;
+    background: #fff;
+    border-radius: 7px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    color: #5b6572;
+}
+
+.date-field__nav:hover { border-color: #0f766e; color: #0f766e; }
+
+.date-field__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.date-field__dow {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #8a95a1;
+    padding: 4px 0 6px;
+}
+
+.date-field__day {
+    border: 0;
+    background: transparent;
+    border-radius: 7px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #14181d;
+    padding: 0;
+}
+
+.date-field__day:hover { background: #e2f1ef; color: #0b5c55; }
+
+.date-field__day.is-today {
+    box-shadow: inset 0 0 0 1px #0f766e;
+    font-weight: 700;
+}
+
+.date-field__day.is-selected {
+    background: #0f766e;
+    color: #fff;
+    font-weight: 700;
+}
+
+.date-field__day.is-selected:hover { background: #0b5c55; color: #fff; }
+
+.date-field__foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 1px solid #e2e6ea;
+}
+
+.date-field__link {
+    border: 0;
+    background: transparent;
+    color: #0f766e;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 6px;
+}
+
+.date-field__link:hover { background: #e2f1ef; }
+
+.date-field :focus-visible { outline: 2px solid #0f766e; outline-offset: 1px; }

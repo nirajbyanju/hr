@@ -24,19 +24,14 @@
                                 <input type="text" name="title" class="form-control" value="{{ old('title', $holiday->title ?? '') }}" maxlength="255" required>
                             </div>
 
-                            <div class="col-md-6 form-group mb-3">
-                                <label>{{ __('Holiday Date') }}</label>
-                                <input
-                                    type="text"
-                                    id="holiday_date"
-                                    name="holiday_date"
-                                    class="form-control datetimepicker"
-                                    placeholder="{{ __('YYYY-MM-DD') }}"
-                                    autocomplete="off"
-                                    value="{{ old('holiday_date', isset($holiday) ? $holiday->holiday_date?->format('Y-m-d') : $defaultDate) }}"
-                                    required
-                                >
-                            </div>
+                            <x-date-field
+                                name="holiday_date"
+                                id="holiday_date"
+                                :label="__('Holiday Date')"
+                                :value="isset($holiday) ? $holiday->holiday_date?->format('Y-m-d') : $defaultDate"
+                                required
+                                wrapper-class="col-md-6 form-group mb-3"
+                            />
 
                             <div class="col-md-6 form-group mb-3">
                                 <label>{{ __('Holiday Type') }}</label>

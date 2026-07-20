@@ -27,6 +27,8 @@ class UserManagementService
     public function createUser(array $payload, int $actorId): User
     {
         return DB::transaction(function () use ($payload, $actorId): User {
+            $this->assertSeatAvailable();
+
              $status = $payload['account_status'] ?? 'active';
             $plainPassword = (string) ($payload['password'] ?? '');
             if ($plainPassword === '') {
@@ -68,6 +70,38 @@ class UserManagementService
 
             return $user;
         });
+    }
+
+    /**
+     * Stop the tenant exceeding the seat cap the platform set for it.
+     *
+     * Enforced here rather than in StoreUserRequest so every path that creates
+     * a user is covered, and counted live rather than from
+     * companies.users_count, which is a cache refreshed on demand and can be
+     * hours stale.
+     *
+     * Every row in `users` takes a seat, including inactive and rejected ones —
+     * one rule the admin can reason about, and freeing a seat is a deletion
+     * they can perform themselves.
+     */
+    private function assertSeatAvailable(): void
+    {
+        $company = tenant();
+
+        // Central context (console commands, seeders): no tenant, no cap.
+        if (! $company instanceof \App\Models\Company || ! $company->hasUserLimit()) {
+            return;
+        }
+
+        if (User::query()->count() < $company->user_limit) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'email' => __('This company has reached its limit of :limit user accounts. Contact the platform administrator to raise it.', [
+                'limit' => $company->user_limit,
+            ]),
+        ]);
     }
 
     private function applySmtpSettingsFromDatabase(): void

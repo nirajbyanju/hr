@@ -49,6 +49,7 @@ class Company extends BaseTenant implements TenantWithDatabase
             'status',
             'starts_on',
             'expires_on',
+            'user_limit',
             'users_count',
             'employees_count',
             'stats_synced_at',
@@ -113,5 +114,34 @@ class Company extends BaseTenant implements TenantWithDatabase
     public function isExpired(): bool
     {
         return $this->expires_on !== null && $this->expires_on->isBefore(today());
+    }
+
+    /** Whether a seat cap applies at all; null user_limit means unlimited. */
+    public function hasUserLimit(): bool
+    {
+        return $this->user_limit !== null;
+    }
+
+    /**
+     * Seats left against the cap, or null when unlimited.
+     *
+     * Pass a live count when enforcing (the cached users_count can be stale by
+     * hours); omit it for reporting, where the cached figure is the point.
+     * Never negative: a cap lowered below the current headcount reads as 0 left
+     * rather than a negative number nobody can act on.
+     */
+    public function seatsRemaining(?int $usersCount = null): ?int
+    {
+        if (! $this->hasUserLimit()) {
+            return null;
+        }
+
+        return max(0, $this->user_limit - (int) ($usersCount ?? $this->users_count));
+    }
+
+    /** Days until the plan expires; negative once past, null with no expiry. */
+    public function daysUntilExpiry(): ?int
+    {
+        return $this->expires_on === null ? null : today()->diffInDays($this->expires_on, false);
     }
 }

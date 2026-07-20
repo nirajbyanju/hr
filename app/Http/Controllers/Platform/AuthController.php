@@ -40,13 +40,15 @@ class AuthController extends Controller
 
         $admin = Auth::guard('central')->user();
 
-        if ($admin === null || ! $admin->is_active) {
+        $reason = $admin?->inactiveReason();
+
+        if ($admin === null || $reason !== null) {
             Auth::guard('central')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => __('This platform administrator account is disabled.'),
+                'email' => $reason ?? __('This platform administrator account is disabled.'),
             ]);
         }
 

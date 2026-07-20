@@ -19,6 +19,8 @@ class SystemSettingsSeeder extends Seeder
             'employee_code_prefix' => ['value' => 'EMP', 'group_name' => 'localization'],
             'invoice_prefix' => ['value' => 'INV', 'group_name' => 'localization'],
             'date_format' => ['value' => 'Y-m-d', 'group_name' => 'localization'],
+            // A.D. by default; a Nepali company switches this in Settings.
+            'date_system' => ['value' => 'ad', 'group_name' => 'localization'],
             'time_zone' => ['value' => config('app.timezone', 'Asia/Dhaka'), 'group_name' => 'localization'],
             'weekend_days' => ['value' => 'sat,sun', 'group_name' => 'localization'],
             'mail_mailer' => ['value' => config('mail.default', 'smtp'), 'group_name' => 'smtp'],

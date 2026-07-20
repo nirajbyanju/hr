@@ -82,6 +82,7 @@ class SettingsService
             'employee_code_prefix' => ['group_name' => 'localization'],
             'invoice_prefix' => ['group_name' => 'localization'],
             'date_format' => ['group_name' => 'localization'],
+            'date_system' => ['group_name' => 'localization'],
             'time_zone' => ['group_name' => 'localization'],
             'weekend_days' => ['group_name' => 'localization'],
             'mail_mailer' => ['group_name' => 'smtp'],

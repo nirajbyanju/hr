@@ -4,9 +4,11 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Platform\AdminController as PlatformAdminController;
 use App\Http\Controllers\Platform\AuthController as PlatformAuthController;
 use App\Http\Controllers\Platform\CompanyController as PlatformCompanyController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
+use App\Http\Controllers\Platform\ReportController as PlatformReportController;
 use App\Http\Controllers\ReportController;
 use App\Modules\Announcements\Http\Controllers\AnnouncementController;
 use App\Modules\Settings\Http\Controllers\SettingsController;
@@ -79,10 +81,30 @@ Route::prefix('platform')->name('platform.')->group(function (): void {
     Route::get('login', [PlatformAuthController::class, 'create'])->name('login');
     Route::post('login', [PlatformAuthController::class, 'store'])->middleware('throttle:6,1')->name('login.store');
 
-    Route::middleware('auth:central')->group(function (): void {
+    Route::middleware(['auth:central', 'central.usable'])->group(function (): void {
         Route::post('logout', [PlatformAuthController::class, 'destroy'])->name('logout');
+
+        /*
+         | Platform administrators. Every administrator can manage every other
+         | one — there is no role model, a row in `central_users` IS the
+         | privilege — so the controller's job is preventing lockout rather
+         | than checking permissions.
+         */
+        Route::get('admins', [PlatformAdminController::class, 'index'])->name('admins.index');
+        Route::get('admins/create', [PlatformAdminController::class, 'create'])->name('admins.create');
+        Route::post('admins', [PlatformAdminController::class, 'store'])->name('admins.store');
+        Route::get('admins/{admin}', [PlatformAdminController::class, 'show'])->name('admins.show');
+        Route::get('admins/{admin}/edit', [PlatformAdminController::class, 'edit'])->name('admins.edit');
+        Route::put('admins/{admin}', [PlatformAdminController::class, 'update'])->name('admins.update');
+        Route::get('admins/{admin}/password', [PlatformAdminController::class, 'editPassword'])->name('admins.password.edit');
+        Route::put('admins/{admin}/password', [PlatformAdminController::class, 'updatePassword'])->name('admins.password.update');
+        Route::patch('admins/{admin}/status', [PlatformAdminController::class, 'toggleStatus'])->name('admins.status');
+        Route::delete('admins/{admin}', [PlatformAdminController::class, 'destroy'])->name('admins.destroy');
+
         Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
         Route::post('stats/refresh', [PlatformDashboardController::class, 'refreshStats'])->name('stats.refresh');
+        Route::get('reports/usage', [PlatformReportController::class, 'index'])->name('reports.usage');
+        Route::get('reports/usage/export', [PlatformReportController::class, 'export'])->name('reports.usage.export');
         Route::get('companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');
         Route::post('companies', [PlatformCompanyController::class, 'store'])->name('companies.store');
         Route::get('companies/{company}/edit', [PlatformCompanyController::class, 'edit'])->name('companies.edit');

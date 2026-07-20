@@ -96,6 +96,9 @@ class CompanyController extends Controller
             ],
             'starts_on' => ['nullable', 'date'],
             'expires_on' => ['nullable', 'date'],
+            // Minimum 1: provisioning creates the admin account, so a cap of 0
+            // would leave the company unusable the moment it is created.
+            'user_limit' => ['nullable', 'integer', 'min:1', 'max:100000'],
             // No unique:users rule — `users` lives in the tenant database,
             // which does not exist yet, and the new tenant's is empty anyway.
             'admin_email' => ['required', 'email', 'max:255'],
@@ -114,7 +117,8 @@ class CompanyController extends Controller
             $data['admin_email'],
             $data['admin_password'],
             $data['starts_on'] ?? null,
-            $data['expires_on'] ?? null
+            $data['expires_on'] ?? null,
+            isset($data['user_limit']) ? (int) $data['user_limit'] : null
         );
 
         return redirect()->route('platform.dashboard')
@@ -147,6 +151,9 @@ class CompanyController extends Controller
             'status' => ['required', Rule::in(['active', 'suspended'])],
             'starts_on' => ['nullable', 'date'],
             'expires_on' => ['nullable', 'date'],
+            // Lowering the cap below the current headcount is allowed and does
+            // not remove anyone; it just stops new accounts being created.
+            'user_limit' => ['nullable', 'integer', 'min:1', 'max:100000'],
             // Uniqueness of admin_email is checked inside the tenant database
             // below; a validation rule here would query central.
             'admin_email' => ['nullable', 'email', 'max:255'],
@@ -201,6 +208,7 @@ class CompanyController extends Controller
             'status' => $data['status'],
             'starts_on' => $data['starts_on'] ?? null,
             'expires_on' => $data['expires_on'] ?? null,
+            'user_limit' => isset($data['user_limit']) ? (int) $data['user_limit'] : null,
         ]);
 
         return redirect()->route('platform.dashboard')->with('success', __('Company updated.'));

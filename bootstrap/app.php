@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role.any' => \App\Http\Middleware\EnsureUserHasAnyRole::class,
             'permission' => \App\Http\Middleware\EnsureUserHasPermission::class,
             'portal.access' => \App\Http\Middleware\EnsureUserCanAccessPortal::class,
+            'central.usable' => \App\Http\Middleware\EnsureCentralAdminIsUsable::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -10,7 +10,9 @@ use App\Models\LeaveApplication;
 use App\Models\SystemSetting;
 use App\Models\TaskAssignment;
 use App\Models\TaskTransferRequest;
+use App\Support\DateSystem;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -32,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->registerDateDirectives();
+
         View::composer('partials.template.sidebar', function ($view): void {
             $user = auth()->user();
             $can = fn (string $permission): bool => $user?->hasPermission($permission) ?? false;
@@ -564,5 +568,28 @@ class AppServiceProvider extends ServiceProvider
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Display helpers for stored (A.D.) dates.
+     *
+     * Views should never format a date column directly — going through these
+     * is what makes the company's Nepali/English choice apply everywhere
+     * instead of only on the screens someone remembered to update.
+     *
+     *   @displayDate($employee->date_of_birth)       2083-04-04  /  2026-07-20
+     *   @displayDateLong($employee->date_of_birth)   Shrawan 4, 2083  /  Jul 20, 2026
+     */
+    private function registerDateDirectives(): void
+    {
+        Blade::directive(
+            'displayDate',
+            fn (string $expression): string => "<?php echo e(\App\Support\DateSystem::display({$expression})); ?>"
+        );
+
+        Blade::directive(
+            'displayDateLong',
+            fn (string $expression): string => "<?php echo e(\App\Support\DateSystem::displayLong({$expression})); ?>"
+        );
     }
 }

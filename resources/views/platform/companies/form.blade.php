@@ -58,8 +58,8 @@
 
             <div class="form-section">
                 <div class="section-title">
-                    <h2>Subscription dates</h2>
-                    <p>Use an expiry date to automatically block tenant access after the plan ends.</p>
+                    <h2>Subscription</h2>
+                    <p>Use an expiry date to automatically block tenant access after the plan ends, and a seat limit to cap how many accounts the company can create.</p>
                 </div>
 
                 <div class="grid-2">
@@ -76,6 +76,21 @@
                         @error('expires_on')<div class="err">{{ $message }}</div>@enderror
                     </label>
                 </div>
+
+                <label class="field">
+                    <span class="lab">User account limit</span>
+                    <input class="input" type="number" name="user_limit" min="1" max="100000" step="1"
+                           value="{{ old('user_limit', $company->user_limit) }}" placeholder="Unlimited">
+                    <div class="help">
+                        The most login accounts this company may create, including the admin below.
+                        Leave blank for unlimited.
+                        @if($mode === 'edit')
+                            Currently using <strong>{{ $company->users_count ?? '—' }}</strong> account(s).
+                            Lowering the limit never removes existing accounts — it only blocks new ones.
+                        @endif
+                    </div>
+                    @error('user_limit')<div class="err">{{ $message }}</div>@enderror
+                </label>
             </div>
 
             <div class="form-section">

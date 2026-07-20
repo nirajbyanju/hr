@@ -43,7 +43,7 @@
                         <th>Status</th>
                         <th>Start date</th>
                         <th>Expiry date</th>
-                        <th>Users</th>
+                        <th>Users / limit</th>
                         <th>Employees</th>
                         <th style="text-align:right;">Actions</th>
                     </tr>
@@ -71,7 +71,14 @@
                             </td>
                             <td>{{ $company->starts_on?->format('M d, Y') ?? 'Not set' }}</td>
                             <td>{{ $company->expires_on?->format('M d, Y') ?? 'No expiry' }}</td>
-                            <td>{{ $company->users_count ?? '—' }}</td>
+                            <td class="nowrap">
+                                {{ $company->users_count ?? '—' }}@if($company->hasUserLimit()) / {{ $company->user_limit }}@endif
+                                @if($company->hasUserLimit() && $company->seatsRemaining() === 0)
+                                    <div class="seats-sub" style="color:var(--danger);">Limit reached</div>
+                                @elseif(! $company->hasUserLimit())
+                                    <div class="seats-sub">Unlimited</div>
+                                @endif
+                            </td>
                             <td>{{ $company->employees_count ?? '—' }}</td>
                             <td>
                                 <div class="row-actions">

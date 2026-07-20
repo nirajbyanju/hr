@@ -2,6 +2,7 @@
 
 namespace App\Modules\Settings\Http\Requests;
 
+use App\Support\DateSystem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -36,6 +37,7 @@ class UpdateSettingsRequest extends FormRequest
             'employee_code_prefix' => ['nullable', 'string', 'max:30'],
             'invoice_prefix' => ['nullable', 'string', 'max:30'],
             'date_format' => ['required', 'string', 'max:40'],
+            'date_system' => ['required', 'string', Rule::in([DateSystem::AD, DateSystem::BS])],
             'time_zone' => ['required', 'timezone'],
             'weekend_days' => ['array'],
             'weekend_days.*' => ['string', Rule::in(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'])],

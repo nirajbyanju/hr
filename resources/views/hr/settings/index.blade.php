@@ -113,6 +113,22 @@
                                 <input type="text" class="form-control" name="date_format" value="{{ old('date_format', $settings['date_format'] ?? 'Y-m-d') }}" required>
                             </div>
                             <div class="col-md-6 form-group">
+                                <label>{{ __('Calendar System') }}</label>
+                                @php($dateSystem = old('date_system', $settings['date_system'] ?? \App\Support\DateSystem::AD))
+                                <select class="form-control" name="date_system" required>
+                                    <option value="{{ \App\Support\DateSystem::AD }}" {{ $dateSystem === \App\Support\DateSystem::AD ? 'selected' : '' }}>
+                                        {{ __('English (Gregorian / A.D.)') }}
+                                    </option>
+                                    <option value="{{ \App\Support\DateSystem::BS }}" {{ $dateSystem === \App\Support\DateSystem::BS ? 'selected' : '' }}>
+                                        {{ __('Nepali (Bikram Sambat / B.S.)') }}
+                                    </option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    {{ __('Applies to every date picker and date shown across the system. Dates are always stored internally as A.D., so switching back and forth never changes your data.') }}
+                                </small>
+                                @error('date_system')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6 form-group">
                                 <label>{{ __('Time Zone') }}</label>
                                 @php($tz = old('time_zone', $settings['time_zone'] ?? config('app.timezone')))
                                 <select class="form-control" name="time_zone" required>

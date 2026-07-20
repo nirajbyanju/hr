@@ -98,4 +98,11 @@
         }
     })();
 </script>
+{{-- Bikram Sambat month-length table, emitted from the same PHP package the
+     server converts with, so the browser picker and the backend can never
+     disagree. Only sent when the company actually uses the Nepali calendar. --}}
+@if(\App\Support\DateSystem::isNepali())
+    <script>window.__NEPALI_CALENDAR__ = @json(\App\Support\DateSystem::calendarPayload());</script>
+@endif
+<script src="{{ asset(config('madpos_ui.assets_base').'/js/date-field.js') }}"></script>
 @stack('scripts')

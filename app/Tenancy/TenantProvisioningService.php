@@ -29,7 +29,8 @@ class TenantProvisioningService
         string $adminEmail,
         string $adminPassword,
         ?string $startsOn = null,
-        ?string $expiresOn = null
+        ?string $expiresOn = null,
+        ?int $userLimit = null
     ): Company {
         // Creating the row fires TenantCreated, which synchronously creates the
         // database, runs database/migrations/tenant, and seeds it.
@@ -46,6 +47,7 @@ class TenantProvisioningService
                 'status' => 'provisioning',
                 'starts_on' => $startsOn,
                 'expires_on' => $expiresOn,
+                'user_limit' => $userLimit,
             ]);
         } catch (Throwable $e) {
             $orphan = Company::query()->where('slug', $slug)->first();
