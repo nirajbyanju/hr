@@ -5,6 +5,8 @@ namespace App\Modules\IdCards\Services;
 use App\Models\Employee;
 use App\Models\EmployeeIdCard;
 use App\Models\EmployeeIdCardPrintLog;
+use App\Modules\IdCards\Support\IdCardToken;
+use App\Modules\IdCards\Support\QrSvg;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -77,6 +79,48 @@ class IdCardService
 
             return $card;
         });
+    }
+
+    /**
+     * Shared view data for rendering a card (preview / print / pdf / self-service).
+     * PDFs need the photo inlined as a data URI because DomPDF cannot fetch assets.
+     *
+     * @return array<string, mixed>
+     */
+    public function cardViewData(EmployeeIdCard $card, bool $forPdf): array
+    {
+        $employee = $card->employee;
+        $token = IdCardToken::make((int) $card->employee_id, (string) $card->serial);
+
+        $photo = null;
+        if ($employee->avatar_path) {
+            $photo = $forPdf ? $this->fileToDataUri($employee->avatar_path) : asset($employee->avatar_path);
+        }
+
+        return [
+            'card' => $card,
+            'employee' => $employee,
+            'qrSvg' => QrSvg::render($token, '30mm'),
+            'brandName' => config('app.name', 'SamriddhiHR'),
+            'photo' => $photo,
+        ];
+    }
+
+    private function fileToDataUri(string $relativePath): ?string
+    {
+        $absolute = public_path($relativePath);
+        if (! is_file($absolute)) {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($absolute, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'image/jpeg',
+        };
+
+        return 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($absolute));
     }
 
     private function log(EmployeeIdCard $card, string $event, ?string $format, ?int $userId, ?string $ip, ?string $userAgent): void

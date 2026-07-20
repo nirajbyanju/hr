@@ -27,7 +27,15 @@ trait CreatesTaskFixtures
             'employment_status' => 'active',
         ]);
 
-        $role = Role::query()->create(['slug' => $roleSlug . '-' . $user->id, 'name' => $roleSlug, 'is_system' => false]);
+        // Both slug and name must be unique per fixture: the tenant database is
+        // seeded with the real role catalogue (Admin, HR Admin, …) and MySQL's
+        // unique index on `name` is case-insensitive, so a plain "admin" here
+        // would collide with the seeded "Admin".
+        $role = Role::query()->create([
+            'slug' => $roleSlug . '-' . $user->id,
+            'name' => $roleSlug . '-' . $user->id,
+            'is_system' => false,
+        ]);
         $permissionIds = Permission::query()->whereIn('slug', $permissionSlugs)->pluck('id');
         $role->permissions()->sync($permissionIds);
         $user->roles()->attach($role->id, ['assigned_at' => now()]);

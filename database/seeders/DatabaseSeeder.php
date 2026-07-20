@@ -5,27 +5,24 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Seeds the CENTRAL database, which holds platform administrators and the
+ * company list.
+ *
+ * Only the platform administrator is seeded. Companies are not: each one owns a
+ * separate database that has to be provisioned, which happens through the
+ * console or `tenant:create`. A tenant's own database is seeded by
+ * TenantDatabaseSeeder as part of that provisioning.
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        $this->call([
-            SystemSettingsSeeder::class,
-            AdminUserSeeder::class,
-            LeavePolicySeeder::class,
-            TaskLookupSeeder::class,
-            TaskTagSeeder::class,
-        ]);
+        $this->call(CentralAdminSeeder::class);
 
-        // Demo login accounts (config/demo_users.php) are for local development only
-        // and must never be seeded into staging or production.
-        if (app()->environment('local')) {
-            $this->call(DemoUserSeeder::class);
-        }
+        $this->command?->newLine();
+        $this->command?->line('  Add a company + its database : php artisan tenant:create "Acme Ltd" acme.com');
     }
 }

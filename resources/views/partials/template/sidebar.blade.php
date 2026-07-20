@@ -94,8 +94,10 @@
                 @php($idCardUser = auth()->user())
                 @php($canIdCardMenu = $idCardUser?->hasAnyPermission(['id_card.view', 'id_card.generate', 'id_card.print', 'id_card.manage']) ?? false)
                 @php($canScanMenu = $idCardUser?->hasAnyPermission(['attendance.scan', 'attendance.manage']) ?? false)
-                @if($canIdCardMenu || $canScanMenu)
-                    @php($idCardActive = request()->routeIs('id-cards.*') || request()->routeIs('attendance.scan.*'))
+                {{-- Self-service needs no permission: any user linked to an employee sees their own card. --}}
+                @php($canMyIdCard = $idCardUser?->employee()->exists() ?? false)
+                @if($canIdCardMenu || $canScanMenu || $canMyIdCard)
+                    @php($idCardActive = request()->routeIs('id-cards.*') || request()->routeIs('attendance.scan.*') || request()->routeIs('my.id-card*'))
                     <li id="menu-id-cards" data-id="menu-id-cards" class="main {{ $idCardActive ? 'active' : '' }}">
                         <a class="has-arrow" href="#" aria-expanded="{{ $idCardActive ? 'true' : 'false' }}">
                             <i class="icon-badge"></i>
@@ -107,6 +109,9 @@
                             @endif
                             @if($canScanMenu)
                                 <li class="{{ request()->routeIs('attendance.scan.*') ? 'active' : '' }}"><a href="{{ route('attendance.scan.index') }}">{{ __('Attendance Scanner') }}</a></li>
+                            @endif
+                            @if($canMyIdCard)
+                                <li class="{{ request()->routeIs('my.id-card*') ? 'active' : '' }}"><a href="{{ route('my.id-card') }}">{{ __('My ID Card') }}</a></li>
                             @endif
                         </ul>
                     </li>

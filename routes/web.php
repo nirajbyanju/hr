@@ -3,7 +3,6 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Platform\AuthController as PlatformAuthController;
 use App\Http\Controllers\Platform\CompanyController as PlatformCompanyController;
@@ -20,6 +19,7 @@ use App\Modules\Employees\Http\Controllers\EmployeeResignationController;
 use App\Modules\Holidays\Http\Controllers\HolidayController;
 use App\Modules\IdCards\Http\Controllers\AttendanceScanController;
 use App\Modules\IdCards\Http\Controllers\IdCardController;
+use App\Modules\IdCards\Http\Controllers\MyIdCardController;
 use App\Modules\Leaves\Http\Controllers\LeaveApplicationController;
 use App\Modules\Leaves\Http\Controllers\LeaveBalanceController;
 use App\Modules\Leaves\Http\Controllers\LeaveCategoryController;
@@ -55,8 +55,12 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 
-    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
+    /*
+     | There is no self-registration. Staff accounts are created by their
+     | company's admin under User Management; a company itself is created by a
+     | platform administrator. Open registration would have let anyone who knows
+     | a company's email domain create an account in that company's database.
+     */
 
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
@@ -66,16 +70,19 @@ Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
 
 /*
- | Platform (landlord) console — manage tenant companies. Restricted to the
- | super-admin role so a per-company admin cannot manage other tenants.
+ | Platform (landlord) console — manage tenant companies. Runs on the `central`
+ | guard against the central database, so authorization is guard membership:
+ | a row in `central_users` is a platform administrator. Tenant staff use the
+ | `web` guard against their own company database and cannot reach this at all.
  */
 Route::prefix('platform')->name('platform.')->group(function (): void {
     Route::get('login', [PlatformAuthController::class, 'create'])->name('login');
     Route::post('login', [PlatformAuthController::class, 'store'])->middleware('throttle:6,1')->name('login.store');
 
-    Route::middleware(['auth', 'role.any:super-admin'])->group(function (): void {
+    Route::middleware('auth:central')->group(function (): void {
         Route::post('logout', [PlatformAuthController::class, 'destroy'])->name('logout');
         Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+        Route::post('stats/refresh', [PlatformDashboardController::class, 'refreshStats'])->name('stats.refresh');
         Route::get('companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');
         Route::post('companies', [PlatformCompanyController::class, 'store'])->name('companies.store');
         Route::get('companies/{company}/edit', [PlatformCompanyController::class, 'edit'])->name('companies.edit');
@@ -147,6 +154,14 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
         Route::get('/{card}/pdf', [IdCardController::class, 'pdf'])->middleware('permission:id_card.print,id_card.manage')->name('pdf');
         Route::post('/{card}/revoke', [IdCardController::class, 'revoke'])->middleware('permission:id_card.manage')->name('revoke');
     });
+
+    /*
+     | Self-service: an employee's own ID card. No id_card.* permission and no
+     | route parameter — the card is derived from the signed-in user, so an
+     | employee can only ever reach their own.
+     */
+    Route::get('my/id-card', [MyIdCardController::class, 'show'])->name('my.id-card');
+    Route::get('my/id-card/pdf', [MyIdCardController::class, 'pdf'])->name('my.id-card.pdf');
 
     Route::prefix('announcements')->name('announcements.')->group(function (): void {
         Route::get('/', [AnnouncementController::class, 'index'])->name('index');

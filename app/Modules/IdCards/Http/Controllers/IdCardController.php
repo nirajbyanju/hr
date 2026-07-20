@@ -7,8 +7,6 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeIdCard;
 use App\Modules\IdCards\Services\IdCardService;
-use App\Modules\IdCards\Support\IdCardToken;
-use App\Modules\IdCards\Support\QrSvg;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -128,43 +126,10 @@ class IdCardController extends Controller
     }
 
     /**
-     * Build the shared view data for the card (preview / print / pdf).
-     *
      * @return array<string, mixed>
      */
     private function cardViewData(EmployeeIdCard $card, bool $forPdf): array
     {
-        $employee = $card->employee;
-        $token = IdCardToken::make((int) $card->employee_id, (string) $card->serial);
-
-        $photo = null;
-        if ($employee->avatar_path) {
-            $photo = $forPdf ? $this->fileToDataUri($employee->avatar_path) : asset($employee->avatar_path);
-        }
-
-        return [
-            'card' => $card,
-            'employee' => $employee,
-            'qrSvg' => QrSvg::render($token, '30mm'),
-            'brandName' => config('app.name', 'SamriddhiHR'),
-            'photo' => $photo,
-        ];
-    }
-
-    private function fileToDataUri(string $relativePath): ?string
-    {
-        $absolute = public_path($relativePath);
-        if (! is_file($absolute)) {
-            return null;
-        }
-
-        $mime = match (strtolower(pathinfo($absolute, PATHINFO_EXTENSION))) {
-            'png' => 'image/png',
-            'gif' => 'image/gif',
-            'webp' => 'image/webp',
-            default => 'image/jpeg',
-        };
-
-        return 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($absolute));
+        return $this->idCardService->cardViewData($card, $forPdf);
     }
 }

@@ -5,24 +5,20 @@ namespace Tests\Feature\Tasks;
 use App\Models\TaskAssignment;
 use App\Modules\Tasks\Services\TaskAssignmentService;
 use App\Modules\Tasks\Services\TaskWorkflowService;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
 /**
  * A Kanban column groups several workflow statuses, so most real drags span more than one
  * transition. These lock in that the board can actually make the common forward moves while
  * still refusing anything the permission matrix forbids.
  */
-class TaskKanbanMoveTest extends TestCase
+class TaskKanbanMoveTest extends TenantTestCase
 {
-    use RefreshDatabase;
     use CreatesTaskFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PermissionSeeder::class);
     }
 
     private function assignedAssignmentFor($assignee, $admin): TaskAssignment

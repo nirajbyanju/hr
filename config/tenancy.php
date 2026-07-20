@@ -2,17 +2,19 @@
 
 declare(strict_types=1);
 
-use Stancl\Tenancy\Database\Models\Domain;
-
 return [
     /*
     |--------------------------------------------------------------------------
     | stancl/tenancy — database-per-tenant
     |--------------------------------------------------------------------------
+    |
+    | App\Models\Company IS the tenant model. There is no `domain_model`:
+    | tenants are identified by the domain part of a user's login email, not by
+    | the HTTP host, so stancl's Domain model and its host-based resolvers are
+    | unused.
     */
-    'tenant_model' => \App\Models\Tenant::class,
+    'tenant_model' => \App\Models\Company::class,
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
-    'domain_model' => Domain::class,
 
     // Hosts that serve the central (landlord/platform) application.
     'central_domains' => [
@@ -21,19 +23,30 @@ return [
     ],
 
     // Executed when tenancy is initialized (per tenant request).
+    //
+    // CacheTenancyBootstrapper is deliberately NOT enabled: Stancl's CacheManager
+    // calls ->tags() on every cache method, but Laravel's `database` store does not
+    // extend TaggableStore (only apc/array/failover/memcached/null/redis do), so it
+    // throws on the first cached read. The one cache consumer we have
+    // (App\Models\SystemSetting) scopes its own key by tenant instead.
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
     ],
 
     'database' => [
         'central_connection' => env('DB_CONNECTION', 'mysql'),
-        'template_tenant_connection' => null,
+        // NOT 'tenant' — see the note on the connection itself in
+        // config/database.php. stancl reserves that name for the live tenant
+        // connection and unsets it between tenants.
+        'template_tenant_connection' => 'tenant_template',
 
-        // Tenant database name = prefix + tenant_id + suffix  (e.g. "tenant_ktm").
-        'prefix' => 'tenant_',
+        // Tenant database name = prefix + slug (e.g. "tenant_ktm_group"). The
+        // name is derived from the slug rather than the UUID by
+        // TenancyServiceProvider::boot(), so databases are identifiable in
+        // phpMyAdmin. Once created it is frozen in data->tenancy_db_name.
+        'prefix' => env('TENANCY_DB_PREFIX', 'tenant_'),
         'suffix' => '',
 
         'managers' => [
@@ -59,7 +72,11 @@ return [
             'public' => '%storage_path%/app/public/',
         ],
         'suffix_storage_path' => true,
-        'asset_helper_tenancy' => true,
+
+        // Requires stancl's `stancl.tenancy.asset` route, which only exists
+        // when tenancy.routes is true. We serve assets from the central public
+        // directory as normal, so this stays off.
+        'asset_helper_tenancy' => false,
     ],
 
     'redis' => [
@@ -71,13 +88,17 @@ return [
         // Stancl\Tenancy\Features\UserImpersonation::class,
     ],
 
-    'routes' => true,
+    // No stancl route registration — identification is by email domain, so the
+    // host-based InitializeTenancyBy* middleware and the tenant asset route are
+    // never used.
+    'routes' => false,
 
-    // Tenant databases get the full HR schema. Phase 1 reuses the existing
-    // migrations; a dedicated central/tenant split is a later refinement.
+    // Tenant databases get ONLY database/migrations/tenant. The central
+    // migrations (companies, central_users, sessions, cache, jobs) must never
+    // run inside a tenant database.
     'migration_parameters' => [
         '--force' => true,
-        '--path' => [database_path('migrations')],
+        '--path' => [database_path('migrations/tenant')],
         '--realpath' => true,
     ],
 
@@ -87,13 +108,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Legacy shared-DB tenancy keys (still used by the current app)
+    | Local development
     |--------------------------------------------------------------------------
-    | Read by App\Http\Middleware\IdentifyTenant and the platform console while
-    | the app is migrated from shared-DB (company_id) to database-per-tenant.
+    | Allows ?tenant=<slug> to switch the active tenant without logging in.
+    | Never enable outside local development.
+    |
+    | There is no "default company" any more: platform administrators live in
+    | the central database on their own guard, so there is no lockout risk that
+    | a fallback tenant needs to protect against.
     */
-    'domain' => env('TENANCY_DOMAIN', 'localhost'),
-    'central_subdomains' => ['www', 'app', 'admin', 'api', 'mail'],
-    'default_slug' => env('TENANCY_DEFAULT_SLUG', 'default'),
     'allow_dev_override' => (bool) env('TENANCY_DEV_OVERRIDE', env('APP_ENV') === 'local'),
 ];

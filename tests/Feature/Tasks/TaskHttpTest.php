@@ -7,24 +7,20 @@ use App\Models\TaskAssignment;
 use App\Models\TaskCategory;
 use App\Models\TaskChecklist;
 use App\Modules\Tasks\Services\TaskAssignmentService;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
 /**
  * HTTP-level coverage: exercises the real routes/controllers/Blade views end-to-end
  * (this is the layer that a pure service-level test cannot catch — e.g. a Blade
  * compile error only surfaces when the view is actually rendered for a request).
  */
-class TaskHttpTest extends TestCase
+class TaskHttpTest extends TenantTestCase
 {
-    use RefreshDatabase;
     use CreatesTaskFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PermissionSeeder::class);
     }
 
     public function test_create_form_renders(): void

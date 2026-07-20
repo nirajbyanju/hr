@@ -4,55 +4,27 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\User;
-use Database\Seeders\Concerns\ResolvesDefaultCompany;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
-    use ResolvesDefaultCompany;
-
     /**
-     * Seed permissions, default organization roles, role permissions and one admin user.
+     * Seeds the permission catalogue and the default operational roles into a
+     * TENANT database.
+     *
+     * It no longer creates an administrator user. A company's first admin is
+     * created by the provisioning flow (App\Tenancy\TenantProvisioningService),
+     * and platform administrators live in the central database on their own
+     * guard — see `central:create-admin`.
      */
     public function run(): void
     {
         $this->call(PermissionSeeder::class);
 
-        $roles = $this->seedDefaultRolesAndPermissions();
+        $this->seedDefaultRolesAndPermissions();
 
-        $adminRole = $roles['super-admin'];
-        $email = env('DEFAULT_ADMIN_EMAIL', 'nirajbanju1234@gmail.com');
-        $password = env('DEFAULT_ADMIN_PASSWORD', 'password');
-
-        $admin = User::query()->updateOrCreate(
-            ['email' => $email],
-            [
-                'company_id' => $this->defaultCompanyId(),
-                'name' => env('DEFAULT_ADMIN_NAME', 'System Admin'),
-                'password' => Hash::make($password),
-                'account_status' => 'active',
-                'approved_at' => now(),
-                'rejected_reason' => null,
-            ]
-        );
-
-        $admin->roles()->syncWithoutDetaching([
-            $adminRole->id => [
-                'assigned_by' => null,
-                'assigned_at' => now(),
-            ],
-        ]);
-
-        $this->command?->info('Default roles, permissions and admin user are ready.');
-        $this->command?->line('Admin role: Super Admin');
-        $this->command?->line('Admin email: ' . $email);
-
-        if ($password === 'password') {
-            $this->command?->warn('Default password is "password". Change it after first login or set DEFAULT_ADMIN_PASSWORD in .env before seeding.');
-        }
+        $this->command?->info('Default roles and permissions are ready.');
     }
 
     /**
@@ -103,13 +75,6 @@ class AdminUserSeeder extends Seeder
 
         $allPermissionIds = $permissions->pluck('id')->all();
 
-        // super-admin is a non-operational system owner and must not be able to file leave
-        // requests, so it receives every permission except leave.apply. admin keeps all.
-        $leaveApplyId = $permissions->get('leave.apply')?->id;
-        $superAdminPermissionIds = $leaveApplyId !== null
-            ? array_values(array_filter($allPermissionIds, fn ($id) => $id !== $leaveApplyId))
-            : $allPermissionIds;
-
         foreach ($this->defaultRolePermissionRules() as $roleSlug => $rules) {
             if (! isset($roles[$roleSlug])) {
                 continue;
@@ -117,7 +82,6 @@ class AdminUserSeeder extends Seeder
 
             $permissionIds = match ($roleSlug) {
                 'admin' => $allPermissionIds,
-                'super-admin' => $superAdminPermissionIds,
                 default => $this->permissionIdsForRules($rules, $permissions, $permissionsByGroup),
             };
 
@@ -155,11 +119,11 @@ class AdminUserSeeder extends Seeder
      */
     private function defaultRoles(): array
     {
+        // No `super-admin` role. Platform administrators live in the central
+        // database on the `central` guard; a tenant-side role by that name
+        // would be a privilege-escalation path, since a company admin can
+        // assign roles within their own company.
         return [
-            'super-admin' => [
-                'name' => 'Super Admin',
-                'description' => 'Highest-level system owner with full access to all modules and settings.',
-            ],
             'admin' => [
                 'name' => 'Admin',
                 'description' => 'Full system administration access for company setup and operations.',
@@ -302,7 +266,6 @@ class AdminUserSeeder extends Seeder
         ];
 
         return [
-            'super-admin' => [],
             'admin' => [],
             'hr-admin' => [
                 'groups' => [

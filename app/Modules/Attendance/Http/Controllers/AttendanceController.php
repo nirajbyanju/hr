@@ -437,7 +437,7 @@ class AttendanceController extends Controller
 
     private function canEditAttendanceDateTime(User $user): bool
     {
-        return $user->hasAnyRole(['super-admin', 'admin', 'hr-admin', 'hr-manager']);
+        return $user->hasAnyRole(['admin', 'hr-admin', 'hr-manager']);
     }
 
     private function normalizeEntryType(string $value): string

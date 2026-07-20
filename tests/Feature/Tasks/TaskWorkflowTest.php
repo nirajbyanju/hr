@@ -7,20 +7,16 @@ use App\Models\TaskDependency;
 use App\Modules\Tasks\Services\TaskAssignmentService;
 use App\Modules\Tasks\Services\TaskTransferService;
 use App\Modules\Tasks\Services\TaskWorkflowService;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
-class TaskWorkflowTest extends TestCase
+class TaskWorkflowTest extends TenantTestCase
 {
-    use RefreshDatabase;
     use CreatesTaskFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PermissionSeeder::class);
     }
 
     public function test_assignee_can_accept_and_start_their_own_assignment(): void

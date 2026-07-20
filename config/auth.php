@@ -37,10 +37,21 @@ return [
     |
     */
 
+    /*
+    | `web`     — tenant staff, authenticated against the active tenant database.
+    | `central` — platform administrators, authenticated against the central
+    |             database. Laravel namespaces session keys per guard, so both
+    |             can be signed in at once in one browser without interfering.
+    */
     'guards' => [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+        ],
+
+        'central' => [
+            'driver' => 'session',
+            'provider' => 'central_users',
         ],
     ],
 
@@ -65,6 +76,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'central_users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\CentralUser::class,
         ],
 
         // 'users' => [

@@ -6,12 +6,10 @@ use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\TenantTestCase;
 
-class EmployeeAttendanceLinkTest extends TestCase
+class EmployeeAttendanceLinkTest extends TenantTestCase
 {
-    use RefreshDatabase;
 
     private function makeUserWithPermissions(array $permissionSlugs): User
     {

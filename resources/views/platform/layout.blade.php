@@ -105,7 +105,7 @@
                 <a href="{{ route('platform.dashboard') }}" class="{{ request()->routeIs('platform.dashboard') ? 'active' : '' }}">Companies</a>
             </nav>
             <span class="spacer"></span>
-            <span class="who">{{ auth()->user()?->email }}</span>
+            <span class="who">{{ auth('central')->user()?->email }}</span>
             <form method="POST" action="{{ route('platform.logout') }}">
                 @csrf
                 <button type="submit" class="btn btn-sm btn-logout">Sign out</button>

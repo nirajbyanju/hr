@@ -10,7 +10,7 @@ class StoreAttendanceRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $user = $this->user();
-        $canEditAttendanceDateTime = $user?->hasAnyRole(['super-admin', 'admin', 'hr-admin', 'hr-manager']) ?? false;
+        $canEditAttendanceDateTime = $user?->hasAnyRole(['admin', 'hr-admin', 'hr-manager']) ?? false;
 
         if (! $canEditAttendanceDateTime) {
             $now = now();

@@ -17,9 +17,21 @@
         <div class="stat"><div class="n">{{ $stats['pending'] }}</div><div class="l">Pending</div></div>
         <div class="stat"><div class="n">{{ $stats['suspended'] }}</div><div class="l">Suspended</div></div>
         <div class="stat"><div class="n">{{ $stats['expired'] }}</div><div class="l">Expired</div></div>
+        @if($stats['provisioning'] > 0)
+            <div class="stat"><div class="n">{{ $stats['provisioning'] }}</div><div class="l">Provisioning</div></div>
+        @endif
         <div class="stat"><div class="n">{{ $stats['users'] }}</div><div class="l">Users</div></div>
         <div class="stat"><div class="n">{{ $stats['employees'] }}</div><div class="l">Employees</div></div>
     </div>
+
+    <form method="POST" action="{{ route('platform.stats.refresh') }}" style="margin:-8px 0 16px;">
+        @csrf
+        <button type="submit" class="btn btn-sm btn-ghost">↻ Refresh counts</button>
+        <span class="help" style="margin-left:8px;">
+            User and employee counts live in each company's own database and are
+            cached here.
+        </span>
+    </form>
 
     <div class="card">
         <div class="tbl-scroll">
@@ -27,7 +39,7 @@
                 <thead>
                     <tr>
                         <th>Company</th>
-                        <th>Subdomain</th>
+                        <th>Domain</th>
                         <th>Status</th>
                         <th>Start date</th>
                         <th>Expiry date</th>
@@ -38,15 +50,16 @@
                 </thead>
                 <tbody>
                     @foreach($companies as $company)
-                        @php($isDefault = $company->slug === $defaultSlug)
                         <tr>
                             <td>
                                 <div class="co-name">{{ $company->name }}</div>
-                                @if($isDefault)<span class="pill pill-default">Default</span>@endif
+                                <span class="help">{{ $company->getAttribute('tenancy_db_name') ?? '—' }}</span>
                             </td>
-                            <td><span class="co-host">{{ $company->slug }}.{{ $tenancyDomain }}</span></td>
+                            <td><span class="co-host">{{ $company->domain ?? '—' }}</span></td>
                             <td>
-                                @if($company->isExpired())
+                                @if($company->status === 'provisioning')
+                                    <span class="pill pill-pending">Provisioning</span>
+                                @elseif($company->isExpired())
                                     <span class="pill pill-expired">Expired</span>
                                 @elseif($company->isPending())
                                     <span class="pill pill-pending">Pending</span>
@@ -58,26 +71,24 @@
                             </td>
                             <td>{{ $company->starts_on?->format('M d, Y') ?? 'Not set' }}</td>
                             <td>{{ $company->expires_on?->format('M d, Y') ?? 'No expiry' }}</td>
-                            <td>{{ $userCounts[$company->id] ?? 0 }}</td>
-                            <td>{{ $employeeCounts[$company->id] ?? 0 }}</td>
+                            <td>{{ $company->users_count ?? '—' }}</td>
+                            <td>{{ $company->employees_count ?? '—' }}</td>
                             <td>
                                 <div class="row-actions">
                                     <a href="{{ route('platform.companies.edit', $company) }}" class="btn btn-sm btn-ghost">Edit</a>
 
-                                    @unless($isDefault)
-                                        <form method="POST" action="{{ route('platform.companies.status', $company) }}" class="inline">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-ghost">
-                                                {{ $company->status === 'active' ? 'Deactivate' : 'Activate' }}
-                                            </button>
-                                        </form>
+                                    <form method="POST" action="{{ route('platform.companies.status', $company) }}" class="inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-ghost">
+                                            {{ $company->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                        </button>
+                                    </form>
 
-                                        <form method="POST" action="{{ route('platform.companies.destroy', $company) }}" class="inline"
-                                              onsubmit="return confirm('Delete {{ $company->name }} and ALL its data? This cannot be undone.');">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                    @endunless
+                                    <form method="POST" action="{{ route('platform.companies.destroy', $company) }}" class="inline"
+                                          onsubmit="return confirm('Delete {{ $company->name }} and DROP its entire database? This cannot be undone.');">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

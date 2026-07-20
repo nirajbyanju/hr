@@ -44,7 +44,7 @@ return new class extends Migration
 
         // Attach to the roles that manage the workforce, without detaching any
         // permissions an admin may have customised through the UI.
-        foreach (['admin', 'super-admin', 'hr-admin', 'hr-manager'] as $roleSlug) {
+        foreach (['admin', 'hr-admin', 'hr-manager'] as $roleSlug) {
             $role = Role::query()->where('slug', $roleSlug)->first();
             $role?->permissions()->syncWithoutDetaching($ids);
         }

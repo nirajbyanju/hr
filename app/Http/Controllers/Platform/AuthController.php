@@ -9,11 +9,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
+/**
+ * Platform (landlord) console login, on the `central` guard.
+ *
+ * Authorization is guard membership: a row in `central_users` IS a platform
+ * administrator, so there is no role check. Tenant staff authenticate on the
+ * `web` guard against their own database and cannot reach this guard at all.
+ */
 class AuthController extends Controller
 {
     public function create(): View|RedirectResponse
     {
-        if (Auth::check() && Auth::user()?->hasRole('super-admin')) {
+        if (Auth::guard('central')->check()) {
             return redirect()->route('platform.dashboard');
         }
 
@@ -27,21 +34,25 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::guard('central')->attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        if (! Auth::user()?->hasRole('super-admin')) {
-            Auth::guard('web')->logout();
+        $admin = Auth::guard('central')->user();
+
+        if ($admin === null || ! $admin->is_active) {
+            Auth::guard('central')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => __('This area is restricted to platform administrators.'),
+                'email' => __('This platform administrator account is disabled.'),
             ]);
         }
 
         $request->session()->regenerate();
+
+        $admin->forceFill(['last_login_at' => now()])->save();
 
         // Always land in the console (ignore any tenant-app intended URL).
         return redirect()->route('platform.dashboard');
@@ -49,7 +60,7 @@ class AuthController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        Auth::guard('central')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -4,24 +4,19 @@ namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\Employee;
-use App\Models\User;
+use App\Tenancy\TenantStatsRefresher;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
+        // A single central query. Counting live across N tenant databases would
+        // mean N connections plus 2N COUNT(*) queries per page load, and one
+        // broken tenant database would take the whole console down. The
+        // counters are refreshed by tenants:refresh-stats and the button below.
         $companies = Company::query()->orderBy('name')->get();
-
-        // Cross-tenant counts: bypass the tenant scope.
-        $userCounts = User::query()->withoutGlobalScope('tenant')
-            ->selectRaw('company_id, count(*) as aggregate')
-            ->groupBy('company_id')->pluck('aggregate', 'company_id');
-
-        $employeeCounts = Employee::query()->withoutGlobalScope('tenant')
-            ->selectRaw('company_id, count(*) as aggregate')
-            ->groupBy('company_id')->pluck('aggregate', 'company_id');
 
         $stats = [
             'companies' => $companies->count(),
@@ -29,17 +24,30 @@ class DashboardController extends Controller
             'pending' => $companies->filter->isPending()->count(),
             'suspended' => $companies->where('status', 'suspended')->count(),
             'expired' => $companies->filter->isExpired()->count(),
-            'users' => User::query()->withoutGlobalScope('tenant')->count(),
-            'employees' => Employee::query()->withoutGlobalScope('tenant')->count(),
+            'provisioning' => $companies->where('status', 'provisioning')->count(),
+            'users' => $companies->sum('users_count'),
+            'employees' => $companies->sum('employees_count'),
         ];
 
         return view('platform.dashboard', [
             'companies' => $companies,
-            'userCounts' => $userCounts,
-            'employeeCounts' => $employeeCounts,
             'stats' => $stats,
-            'defaultSlug' => config('tenancy.default_slug', 'default'),
-            'tenancyDomain' => config('tenancy.domain', 'localhost'),
         ]);
+    }
+
+    public function refreshStats(TenantStatsRefresher $refresher): RedirectResponse
+    {
+        $result = $refresher->refreshAll();
+
+        if ($result['failed'] === []) {
+            return back()->with('success', __('Counts refreshed for :count companies.', [
+                'count' => $result['refreshed'],
+            ]));
+        }
+
+        return back()->with('error', __('Refreshed :count, but could not reach: :failed', [
+            'count' => $result['refreshed'],
+            'failed' => implode(', ', $result['failed']),
+        ]));
     }
 }

@@ -3,7 +3,6 @@
 @section('title', $mode === 'create' ? 'Add company' : 'Edit company')
 
 @section('content')
-    @php($isDefault = $company->slug === config('tenancy.default_slug'))
     <div class="page-head">
         <div>
             <h1>{{ $mode === 'create' ? 'Add company' : 'Edit ' . $company->name }}</h1>
@@ -31,27 +30,27 @@
                 </label>
 
                 <label class="field">
-                    <span class="lab">Subdomain</span>
-                    <div class="prefixed">
-                        <input class="input" type="text" name="slug" value="{{ old('slug', $company->slug) }}"
-                               pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?" placeholder="acme"
-                               {{ $isDefault ? 'readonly' : 'required' }}>
-                        <span class="suffix">.{{ config('tenancy.domain', 'localhost') }}</span>
+                    <span class="lab">Company domain</span>
+                    <input class="input" type="text" name="domain" value="{{ old('domain', $company->domain) }}"
+                           placeholder="ktm.com" autocapitalize="none" spellcheck="false" required>
+                    <div class="help">
+                        Staff sign in with their email at this domain — someone@ktm.com signs in to this company.
+                        @if($mode === 'edit')
+                            <strong>Changing it will lock out anyone whose email uses the old domain.</strong>
+                        @endif
                     </div>
-                    <div class="help">Lowercase letters, numbers and dashes. This is the company's login address.</div>
-                    @error('slug')<div class="err">{{ $message }}</div>@enderror
+                    @error('domain')<div class="err">{{ $message }}</div>@enderror
                 </label>
 
                 @if($mode === 'edit')
                     <label class="field">
                         <span class="lab">Status</span>
                         @php($status = old('status', $company->status))
-                        <select class="input" name="status" {{ $isDefault ? 'disabled' : '' }}>
+                        <select class="input" name="status">
                             <option value="active" {{ $status === 'active' ? 'selected' : '' }}>Active</option>
                             <option value="suspended" {{ $status === 'suspended' ? 'selected' : '' }}>Suspended (block login)</option>
                         </select>
-                        @if($isDefault)<input type="hidden" name="status" value="active">@endif
-                        @if($isDefault)<div class="help">The default company is always active and cannot be renamed by subdomain.</div>@endif
+                        <div class="help">Suspending signs out anyone currently logged in to this company.</div>
                         @error('status')<div class="err">{{ $message }}</div>@enderror
                     </label>
                 @endif
@@ -88,6 +87,7 @@
                 <label class="field">
                     <span class="lab">Admin email</span>
                     <input class="input" type="email" name="admin_email" value="{{ old('admin_email', $adminUser?->email) }}" {{ $mode === 'create' ? 'required' : '' }}>
+                    <div class="help">Must use the company domain above, e.g. admin@ktm.com.</div>
                     @if($mode === 'edit' && $adminUser === null)
                         <div class="help">No admin user was found for this company.</div>
                     @endif

@@ -2,27 +2,16 @@
 
 namespace Tests;
 
-use App\Models\Company;
-use App\Tenancy\Tenancy;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Schema;
 
+/**
+ * Base case for tests that only touch the CENTRAL database — companies,
+ * platform administrators, the console.
+ *
+ * Anything that touches tenant data (users, employees, tasks, payroll…) must
+ * extend Tests\TenantTestCase instead, which provisions a real tenant database.
+ */
 abstract class TestCase extends BaseTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Activate the default tenant so factory-created records and the records
-        // seen by HTTP requests (via IdentifyTenant) share one company context.
-        if (Schema::hasTable('companies')) {
-            $company = Company::query()
-                ->where('slug', config('tenancy.default_slug', 'default'))
-                ->first();
-
-            if ($company !== null) {
-                app(Tenancy::class)->set($company);
-            }
-        }
-    }
+    //
 }

@@ -64,6 +64,33 @@ return [
             ]) : [],
         ],
 
+        /*
+         | Template for per-tenant connections. stancl clones this and fills in
+         | `database` with the tenant's own database name at runtime.
+         |
+         | It must NOT be called `tenant`: stancl hardcodes that name for the
+         | live tenant connection, and purgeTenantConnection() does
+         | `unset(config['database.connections.tenant'])` between tenants. A
+         | template stored under that key gets deleted on the first switch, and
+         | the next resolve fails with "Database manager for driver  is not
+         | registered".
+         */
+        'tenant_template' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => null,
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
