@@ -21,6 +21,69 @@ class DateSystemTest extends TenantTestCase
         SystemSetting::forgetCache();
     }
 
+    private function useTimezone(string $zone): void
+    {
+        SystemSetting::put(DateSystem::TIMEZONE_KEY, $zone, ['group_name' => 'localization']);
+        SystemSetting::forgetCache();
+    }
+
+    /**
+     * The invariant that protects the data: the app clock is UTC and nothing
+     * may move it. The previous implementation called date_default_timezone_set()
+     * per tenant, which leaked between tenants in a reused worker process and
+     * stored local time with no offset recorded.
+     */
+    public function test_the_application_clock_stays_utc_whatever_the_company_sets(): void
+    {
+        $this->useTimezone('Asia/Kathmandu');
+
+        $this->assertSame('UTC', config('app.timezone'));
+        $this->assertSame('UTC', date_default_timezone_get());
+        $this->assertSame('UTC', now()->getTimezone()->getName());
+    }
+
+    public function test_display_shifts_a_stored_utc_timestamp_into_the_company_zone(): void
+    {
+        $this->useCalendar(DateSystem::AD);
+        $this->useTimezone('Asia/Kathmandu');
+
+        // Nepal is +05:45 — the 45-minute offset is the part naive
+        // implementations get wrong.
+        $this->assertSame('2026-07-20 16:55', DateSystem::displayDateTime('2026-07-20 11:10:00'));
+    }
+
+    /**
+     * The case that decides whether an evening attendance punch lands on the
+     * right day: 20:00 UTC is already tomorrow in Kathmandu.
+     */
+    public function test_an_evening_utc_timestamp_reports_the_next_day_in_kathmandu(): void
+    {
+        $this->useCalendar(DateSystem::AD);
+        $this->useTimezone('Asia/Kathmandu');
+
+        $this->assertSame('2026-07-21', DateSystem::display('2026-07-20 20:00:00'));
+
+        // Same instant, UTC company: still the 20th.
+        $this->useTimezone('UTC');
+        $this->assertSame('2026-07-20', DateSystem::display('2026-07-20 20:00:00'));
+    }
+
+    public function test_timezone_and_calendar_compose(): void
+    {
+        $this->useCalendar(DateSystem::BS);
+        $this->useTimezone('Asia/Kathmandu');
+
+        // 20:00 UTC -> 2026-07-21 in Kathmandu -> BS 2083-04-05.
+        $this->assertSame('2083-04-05', DateSystem::display('2026-07-20 20:00:00'));
+    }
+
+    public function test_an_invalid_timezone_falls_back_to_utc(): void
+    {
+        $this->useTimezone('Mars/Olympus_Mons');
+
+        $this->assertSame('UTC', DateSystem::timezone());
+    }
+
     public function test_it_defaults_to_the_english_calendar(): void
     {
         SystemSetting::query()->where('key', DateSystem::SETTING_KEY)->delete();

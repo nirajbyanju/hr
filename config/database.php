@@ -55,6 +55,11 @@ return [
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            // Pin the session to UTC so MySQL-side time (NOW(), CURRENT_TIMESTAMP
+            // defaults) agrees with PHP instead of following the server's local
+            // zone. Without this, a Kathmandu server writes DB-generated
+            // timestamps 5h45m ahead of the ones Laravel writes.
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
@@ -85,6 +90,10 @@ return [
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            // Must match the central connection — a tenant writing local time
+            // while central writes UTC would make cross-database reporting
+            // silently wrong.
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,

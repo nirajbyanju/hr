@@ -29,6 +29,9 @@ class DateSystem
     /** Setting key holding the company's choice. */
     public const SETTING_KEY = 'date_system';
 
+    /** Setting key holding the company's display timezone. */
+    public const TIMEZONE_KEY = 'time_zone';
+
     /**
      * Nepali month names, indexed 1-12 to match the package's month numbering.
      *
@@ -58,6 +61,47 @@ class DateSystem
         return self::current() === self::BS;
     }
 
+    /**
+     * The company's display timezone.
+     *
+     * Timestamps are stored in UTC; this is only ever applied on the way out.
+     * An invalid or missing value falls back to UTC rather than throwing — a
+     * typo in Settings must not take every page down.
+     */
+    public static function timezone(): string
+    {
+        $zone = (string) \App\Models\SystemSetting::getValue(self::TIMEZONE_KEY, 'UTC');
+
+        return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'UTC';
+    }
+
+    /**
+     * A stored UTC timestamp shifted into the company's timezone.
+     *
+     * Every display path goes through here, so Nepal's +05:45 offset is applied
+     * in exactly one place instead of being re-derived per view.
+     */
+    public static function inCompanyZone(mixed $date): ?Carbon
+    {
+        return self::toCarbon($date)?->setTimezone(self::timezone());
+    }
+
+    /**
+     * A stored timestamp rendered as date + time in the company's zone and
+     * calendar — for attendance punches, audit trails and anything where the
+     * clock matters as much as the day.
+     */
+    public static function displayDateTime(mixed $date, string $placeholder = '—'): string
+    {
+        $local = self::inCompanyZone($date);
+
+        if ($local === null) {
+            return $placeholder;
+        }
+
+        return self::display($local) . ' ' . $local->format('H:i');
+    }
+
     /** Human label for the active calendar, for hints and settings copy. */
     public static function label(?string $system = null): string
     {
@@ -76,7 +120,12 @@ class DateSystem
      */
     public static function display(mixed $date, string $placeholder = '—'): string
     {
-        $carbon = self::toCarbon($date);
+        // Shift into the company's zone BEFORE reading the date. 2026-07-20
+        // 20:00 UTC is already 2026-07-21 in Kathmandu (+05:45) — formatting the
+        // raw UTC value would report the wrong day for anything logged in the
+        // evening, which for attendance is the difference between present and
+        // absent.
+        $carbon = self::inCompanyZone($date);
 
         if ($carbon === null) {
             return $placeholder;
@@ -95,7 +144,7 @@ class DateSystem
      */
     public static function displayLong(mixed $date, string $placeholder = '—'): string
     {
-        $carbon = self::toCarbon($date);
+        $carbon = self::inCompanyZone($date);
 
         if ($carbon === null) {
             return $placeholder;

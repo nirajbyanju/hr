@@ -222,10 +222,22 @@ class AppServiceProvider extends ServiceProvider
             Config::set('madpos_ui.favicon', $settings['company_favicon']);
         }
 
-        if (! empty($settings['time_zone'])) {
-            Config::set('app.timezone', $settings['time_zone']);
-            date_default_timezone_set($settings['time_zone']);
-        }
+        /*
+         | The tenant's `time_zone` setting is DELIBERATELY not applied here.
+         |
+         | It used to call date_default_timezone_set(), which mutates
+         | process-global PHP state. In a queue worker (QUEUE_CONNECTION=database)
+         | or under Octane the process is reused across tenants, so one company's
+         | zone leaked into the next company's jobs — a Kathmandu payroll run
+         | computed on whatever zone happened to run last.
+         |
+         | It also made Laravel STORE local time with no offset recorded, so
+         | changing the setting silently reinterpreted every historical row.
+         |
+         | Timestamps are now always stored in UTC and converted for display by
+         | App\Support\DateSystem, the same way the Nepali/English calendar
+         | choice is applied. Nothing here may change app.timezone.
+         */
 
         if (! empty($settings['mail_mailer'])) {
             Config::set('mail.default', $settings['mail_mailer']);
@@ -590,6 +602,13 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive(
             'displayDateLong',
             fn (string $expression): string => "<?php echo e(\App\Support\DateSystem::displayLong({$expression})); ?>"
+        );
+
+        // For stored timestamps where the clock matters (attendance punches,
+        // audit trails): shifts UTC into the company's timezone.
+        Blade::directive(
+            'displayDateTime',
+            fn (string $expression): string => "<?php echo e(\App\Support\DateSystem::displayDateTime({$expression})); ?>"
         );
     }
 }
