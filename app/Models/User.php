@@ -32,6 +32,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'avatar_path',
         'password',
         'account_status',
         'approved_by',
@@ -66,6 +67,24 @@ class User extends Authenticatable
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * URL of the account avatar, falling back to the shared default image.
+     * An employee-linked user shows their employee photo when they have one,
+     * so a single face follows them across the app.
+     */
+    public function avatarUrl(): string
+    {
+        $path = $this->avatar_path ?: $this->employee?->avatar_path;
+
+        return $path ? asset($path) : asset('assets/img/user/default.jpg');
+    }
+
+    /** Whether a self-uploaded account avatar is set (ignores the employee photo). */
+    public function hasAvatar(): bool
+    {
+        return ! empty($this->avatar_path);
     }
 
     public function approvedBy(): BelongsTo

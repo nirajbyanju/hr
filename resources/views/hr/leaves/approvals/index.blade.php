@@ -40,10 +40,10 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <input type="text" name="from_date" class="form-control leave-date-picker" value="{{ $filters['from_date'] }}" placeholder="{{ __('From date') }}">
+                            <x-date-field name="from_date" :value="$filters['from_date']" :placeholder="__('From date')" wrapper-class="" />
                         </div>
                         <div class="col-md-2">
-                            <input type="text" name="to_date" class="form-control leave-date-picker" value="{{ $filters['to_date'] }}" placeholder="{{ __('To date') }}">
+                            <x-date-field name="to_date" :value="$filters['to_date']" :placeholder="__('To date')" wrapper-class="" />
                         </div>
                         <div class="col-md-2">
                             <select name="per_page" class="form-control">
@@ -192,17 +192,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-(function () {
-    if ($.fn.datepicker) {
-        $('.leave-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    }
-})();
-</script>
-@endpush

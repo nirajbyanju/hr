@@ -344,12 +344,14 @@ class AttendanceController extends Controller
                 continue;
             }
 
+            // notify: false — a bulk history import must not post one Slack
+            // message per row. Only live punches notify.
             $this->attendanceService->addManualLog($employeeId, [
                 'attendance_date' => $attendanceDate,
                 'entry_type' => $entryType,
                 'entry_time' => $entryTime,
                 'remarks' => $remarks,
-            ], $user->id);
+            ], $user->id, notify: false);
             $imported++;
         }
 

@@ -9,14 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class AttendanceService
 {
-    public function __construct(private readonly AttendanceRepository $attendanceRepository)
-    {
+    public function __construct(
+        private readonly AttendanceRepository $attendanceRepository,
+        private readonly AttendanceSlackNotifier $slackNotifier,
+    ) {
     }
 
     /**
      * @param array<string, mixed> $payload
+     * @param bool $notify Send the Slack notification for this entry. Live
+     *  punches (self-service, admin manual, QR scan, device API) notify; the
+     *  bulk CSV import passes false so backfilling history does not flood the
+     *  channel with a message per row.
      */
-    public function addManualLog(int $employeeId, array $payload, ?int $approvedBy = null, string $sourcePrefix = 'manual'): AttendanceLog
+    public function addManualLog(int $employeeId, array $payload, ?int $approvedBy = null, string $sourcePrefix = 'manual', bool $notify = true): AttendanceLog
     {
         $attendanceDate = (string) $payload['attendance_date'];
         $entryType = (string) $payload['entry_type'];
@@ -26,7 +32,7 @@ class AttendanceService
         $checkOutAt = $entryType === 'checkout' ? $entryAt : null;
         $source = substr($sourcePrefix . '-' . $entryType, 0, 40);
 
-        return DB::transaction(function () use ($employeeId, $attendanceDate, $checkInAt, $checkOutAt, $source, $payload, $approvedBy): AttendanceLog {
+        $log = DB::transaction(function () use ($employeeId, $attendanceDate, $checkInAt, $checkOutAt, $source, $payload, $approvedBy): AttendanceLog {
             return $this->attendanceRepository->create([
                 'employee_id' => $employeeId,
                 'attendance_date' => $attendanceDate,
@@ -40,6 +46,12 @@ class AttendanceService
                 'approved_at' => $approvedBy ? now() : null,
             ]);
         });
+
+        if ($notify) {
+            $this->slackNotifier->queueAfterResponse($log);
+        }
+
+        return $log;
     }
 
     /**

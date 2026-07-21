@@ -20,12 +20,12 @@
                         <form method="POST" action="{{ route('employee-resignations.store') }}" class="row g-2">
                             @csrf
                             <div class="col-md-3">
-                                <label>{{ __('Notice Date') }}</label>
-                                <input type="text" name="notice_date" class="form-control resignation-date-picker" value="{{ old('notice_date') }}" placeholder="{{ __('YYYY-MM-DD') }}" autocomplete="off">
+                                <x-date-field name="notice_date" :label="__('Notice Date')" wrapper-class="" />
                             </div>
                             <div class="col-md-3">
-                                <label>{{ __('Requested Last Working Day') }}</label>
-                                <input type="text" name="requested_last_working_day" class="form-control resignation-date-picker" value="{{ old('requested_last_working_day') }}" placeholder="{{ __('YYYY-MM-DD') }}" autocomplete="off" required>
+                                {{-- Mirrors after_or_equal:today on StoreEmployeeResignationRequest. --}}
+                                <x-date-field name="requested_last_working_day" :label="__('Requested Last Working Day')"
+                                              min-from="today" wrapper-class="" required />
                             </div>
                             <div class="col-md-12">
                                 <label>{{ __('Reason') }}</label>
@@ -104,16 +104,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-(function () {
-    if ($.fn.datepicker) {
-        $('.resignation-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    }
-})();
-</script>
-@endpush

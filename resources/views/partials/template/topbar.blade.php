@@ -97,10 +97,11 @@
                                     </li>
 
                                     <li class="divider"></li>
-                                    @if($authUser?->employee && $authUser->hasPermission('employee.profile-update-request-submit'))
+                                    <li><a href="{{ route('dashboard.profile.edit') }}"><i class="icon-user mr10"></i> {{ __('Profile') }}</a></li>
+                                    @if($authUser?->employee)
                                         <li><a href="{{ route('employees.profile-updates.create') }}"><i class="icon-note mr10"></i> {{ __('Update Profile') }}</a></li>
-                                        <li class="divider"></li>
                                     @endif
+                                    <li class="divider"></li>
                                     <li><a href="{{ route('dashboard.password.edit') }}"><i class="icon-lock mr10"></i> {{ __('Change Password') }}</a></li>
                                     <li class="divider"></li>
                                     <li>

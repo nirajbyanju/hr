@@ -24,6 +24,9 @@ class SettingsService
             fn ($day): bool => is_string($day) && $day !== ''
         ))));
 
+        // Unchecked checkboxes are absent from the request; store an explicit flag.
+        $validated['slack_notifications_enabled'] = empty($validated['slack_notifications_enabled']) ? '0' : '1';
+
         $newLogoPath = $this->brandingAssetService->store($companyLogo, 'logo');
         $newFaviconPath = $this->brandingAssetService->store($companyFavicon, 'favicon');
 
@@ -34,6 +37,16 @@ class SettingsService
                 if (! empty($validated['mail_password'])) {
                     $this->settingsRepository->put('mail_password', $validated['mail_password'], [
                         'group_name' => 'smtp',
+                        'is_encrypted' => true,
+                    ]);
+                }
+
+                // Same "blank keeps current" rule as the mail password: the form
+                // never echoes the stored webhook back, so an empty field means
+                // "leave it as is", not "clear it".
+                if (! empty($validated['slack_webhook_url'])) {
+                    $this->settingsRepository->put('slack_webhook_url', $validated['slack_webhook_url'], [
+                        'group_name' => 'slack',
                         'is_encrypted' => true,
                     ]);
                 }
@@ -92,6 +105,8 @@ class SettingsService
             'mail_encryption' => ['group_name' => 'smtp'],
             'mail_from_address' => ['group_name' => 'smtp'],
             'mail_from_name' => ['group_name' => 'smtp'],
+            // The webhook URL itself is written separately (encrypted, conditional).
+            'slack_notifications_enabled' => ['group_name' => 'slack'],
         ];
     }
 

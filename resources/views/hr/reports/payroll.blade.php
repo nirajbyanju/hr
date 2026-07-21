@@ -44,8 +44,8 @@
                             @endif
                         </div>
                         <div class="col-md-2"><select name="status" class="form-control"><option value="">{{ __('All Run Status') }}</option>@foreach(['draft','processed','approved','paid'] as $status)<option value="{{ $status }}" {{ $filters['status']===$status?'selected':'' }}>{{ __(ucfirst($status)) }}</option>@endforeach</select></div>
-                        <div class="col-md-2"><input type="text" name="from_date" class="form-control datetimepicker" value="{{ $filters['from_date'] }}" placeholder="{{ __('From date') }}"></div>
-                        <div class="col-md-2"><input type="text" name="to_date" class="form-control datetimepicker" value="{{ $filters['to_date'] }}" placeholder="{{ __('To date') }}"></div>
+                        <div class="col-md-2"><x-date-field name="from_date" :value="$filters['from_date']" :placeholder="__('From date')" wrapper-class="" /></div>
+                        <div class="col-md-2"><x-date-field name="to_date" :value="$filters['to_date']" :placeholder="__('To date')" wrapper-class="" /></div>
                         <div class="col-md-1"><select name="per_page" class="form-control">@foreach([10,20,50,100] as $size)<option value="{{ $size }}" {{ (int)$filters['per_page']===$size?'selected':'' }}>{{ $size }}</option>@endforeach</select></div>
                         <div class="col-md-2 d-flex gap-2"><button class="btn btn-custom" type="submit"><i class="icon-magnifier"></i></button><a href="{{ route('reports.payroll') }}" class="btn btn-custom-default"><i class="icon-refresh"></i></a></div>
                     </form>

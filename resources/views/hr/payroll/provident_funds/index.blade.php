@@ -28,8 +28,9 @@
                                 <input type="number" step="0.01" min="0" name="opening_balance" class="form-control" value="0" placeholder="{{ __('Existing balance') }}" title="{{ __('Starting PF balance before payroll transactions') }}">
                             </div>
                             <div class="col-md-2">
-                                <label>{{ __('Effective From') }}</label>
-                                <input type="text" name="effective_from" class="form-control datetimepicker" value="{{ now()->toDateString() }}" placeholder="{{ __('Start date') }}" title="{{ __('Payroll uses this setup from this date') }}">
+                                <x-date-field name="effective_from" :label="__('Effective From')" :value="now()->toDateString()"
+                                              :placeholder="__('Start date')" :title="__('Payroll uses this setup from this date')"
+                                              wrapper-class="" />
                             </div>
                             <div class="col-md-1 d-flex align-items-end"><button class="btn btn-custom w-100" type="submit"><i class="icon-check"></i> {{ __('Save') }}</button></div>
                         </form>

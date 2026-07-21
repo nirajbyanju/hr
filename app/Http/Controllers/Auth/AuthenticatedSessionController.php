@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Auth\Concerns\ResolvesTenantFromEmail;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\InitializeTenancyFromSession;
+use App\Modules\Employees\Repositories\EmployeeProfileUpdateRequestRepository;
+use App\Support\UserAvatarService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -139,6 +141,85 @@ class AuthenticatedSessionController extends Controller
     public function editPassword(): View
     {
         return view('hr.dashboard.change_password');
+    }
+
+    public function editProfile(Request $request, EmployeeProfileUpdateRequestRepository $profileUpdateRequests): View
+    {
+        $employee = $request->user()?->employee;
+        if ($employee) {
+            $employee->load([
+                'user:id,email',
+                'department:id,name',
+                'designation:id,name',
+                'salaryGrade:id,grade_name,grade_code',
+                'manager:id,employee_code,first_name,last_name',
+                'addresses',
+                'bankAccounts',
+                'emergencyContacts',
+                'documents',
+            ]);
+
+            return view('hr.employees.profile_updates.create', [
+                'employee' => $employee,
+                'lastRejected' => $profileUpdateRequests->latestRejectedForEmployee((int) $employee->id),
+                'lastPending' => $profileUpdateRequests->latestPendingForEmployee((int) $employee->id),
+            ]);
+        }
+
+        return view('hr.dashboard.profile', [
+            'user' => $request->user()?->load('roles:id,name'),
+        ]);
+    }
+
+    public function updateProfile(Request $request, UserAvatarService $avatars): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_avatar' => ['nullable', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'name' => 'User not authenticated.',
+            ]);
+        }
+
+        // Store the new file first so a failed upload aborts before we touch the
+        // record; the old file is only deleted once the new path is committed.
+        $newAvatarPath = $avatars->store($request->file('avatar'));
+        $oldAvatarPath = $user->avatar_path;
+
+        $attributes = [
+            'name' => $validated['name'],
+            'phone' => $validated['phone'] ?? null,
+        ];
+
+        if ($newAvatarPath !== null) {
+            $attributes['avatar_path'] = $newAvatarPath;
+        } elseif ($request->boolean('remove_avatar')) {
+            $attributes['avatar_path'] = null;
+        }
+
+        try {
+            $user->update($attributes);
+        } catch (\Throwable $e) {
+            // Don't leave the just-uploaded file orphaned if the write fails.
+            $avatars->delete($newAvatarPath);
+
+            throw $e;
+        }
+
+        // Replaced or explicitly removed: the previous file is now unreferenced.
+        if ($newAvatarPath !== null || $request->boolean('remove_avatar')) {
+            $avatars->delete($oldAvatarPath);
+        }
+
+        return redirect()
+            ->route('dashboard.profile.edit')
+            ->with('success', __('Profile updated successfully.'));
     }
 
     public function updatePassword(Request $request): RedirectResponse

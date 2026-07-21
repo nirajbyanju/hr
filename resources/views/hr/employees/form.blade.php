@@ -76,9 +76,8 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-4 form-group mb-3">
-                                    <label>{{ __('Date of Birth') }}</label>
-                                    <input type="text" name="date_of_birth" class="form-control datetimepicker" value="{{ old('date_of_birth', $employee->date_of_birth ?? '') }}" placeholder="{{ __('YYYY-MM-DD') }}">
+                                <div class="col-md-4">
+                                    <x-date-field name="date_of_birth" :label="__('Date of Birth')" :value="$employee->date_of_birth ?? ''" wrapper-class="form-group mb-3" />
                                 </div>
                                 <div class="col-md-4 form-group mb-3">
                                     <label>{{ __('Blood Group') }}</label>
@@ -122,9 +121,8 @@
                                         @endforeach
                                     </select>
                                 </div>
-                    <div class="col-md-4 form-group mb-3">
-                        <label>{{ __('Date of Joining') }}</label>
-                        <input type="text" name="date_of_joining" class="form-control datetimepicker" value="{{ old('date_of_joining', $employee->date_of_joining ?? '') }}" placeholder="{{ __('YYYY-MM-DD') }}" required>
+                    <div class="col-md-4">
+                        <x-date-field name="date_of_joining" :label="__('Date of Joining')" :value="$employee->date_of_joining ?? ''" wrapper-class="form-group mb-3" required />
                     </div>
 
                             <div class="col-md-4 form-group mb-3">

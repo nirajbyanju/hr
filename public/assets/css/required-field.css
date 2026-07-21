@@ -1,0 +1,29 @@
+/**
+ * Required-field marker.
+ *
+ * Adds a red "*" after the label of any form field that carries the HTML
+ * `required` attribute. The marker is driven entirely by that attribute, so it
+ * can never disagree with the field, and any new required field is marked
+ * automatically with no extra markup.
+ *
+ * How a label is matched to its field:
+ *   1. The field is a direct child of the same group as the label
+ *      (the dominant pattern: <div class="col-*|form-group"><label><input required>).
+ *   2. The field sits one level down inside a known input wrapper
+ *      (.input-icon-group / .input-group — e.g. the auth sign-in fields).
+ *
+ * Deliberately NOT matched:
+ *   - .date-field — <x-date-field> renders its own asterisk from the Blade
+ *     component when :required is set. Its <input> is nested, so the
+ *     direct-child rule below skips it and there is no double marker.
+ *   - .form-check-label / .btn — checkbox captions and file-picker buttons that
+ *     happen to be <label>s but are not field captions.
+ *
+ * Requires CSS :has(), supported by all current browsers.
+ */
+:is(.form-group, [class*="col-"]):has(> :is(input, select, textarea)[required]) > label:not(.form-check-label):not(.btn)::after,
+:is(.form-group, [class*="col-"]):has(> :is(.input-icon-group, .input-group) :is(input, select, textarea)[required]) > label:not(.form-check-label):not(.btn)::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: 700;
+}

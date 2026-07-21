@@ -19,6 +19,7 @@
         .sub { color:#93a6a2; font-size:13.5px; margin:0 0 22px; }
         label { display:block; margin-bottom:15px; }
         label .lab { display:block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#93a6a2; margin-bottom:6px; }
+        label:has(:is(input, select, textarea)[required]) .lab::after { content:" *"; color:#f5776b; font-weight:700; }
         input[type=email], input[type=password] { width:100%; height:46px; border:1px solid #2b3a37; border-radius:10px;
             background:#0f1b19; color:#e7ecea; padding:0 13px; font-size:15px; }
         input:focus { outline:none; border-color:#2dd4bf; box-shadow:0 0 0 3px rgba(45,212,191,.14); }

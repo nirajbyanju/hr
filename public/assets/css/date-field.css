@@ -38,12 +38,15 @@
 
 /* ---- Panel ---- */
 
+/* Fixed and parented to <body>: these fields sit inside cards, modals and
+   .table-responsive wrappers whose overflow would clip an absolute panel.
+   The script sets top/left from the input's position on every open and scroll. */
 .date-field__panel {
-    position: absolute;
+    position: fixed;
     z-index: 1080;
-    top: calc(100% + 6px);
+    top: 0;
     left: 0;
-    width: 268px;
+    width: 288px;
     background: #fff;
     border: 1px solid #e2e6ea;
     border-radius: 12px;
@@ -52,25 +55,31 @@
     user-select: none;
 }
 
-/* Flip to the right edge when the field sits near the viewport edge. */
-@media (max-width: 400px) {
-    .date-field__panel { left: auto; right: 0; width: 252px; }
-}
-
 .date-field__head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 5px;
     margin-bottom: 8px;
 }
 
-.date-field__title {
-    font-weight: 700;
-    font-size: 14px;
+.date-field__select {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0 4px;
+    border: 1px solid #e2e6ea;
+    border-radius: 7px;
+    background: #fff;
     color: #14181d;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
 }
 
+.date-field__select:hover { border-color: #0f766e; }
+
 .date-field__nav {
+    flex: none;
     border: 1px solid #e2e6ea;
     background: #fff;
     border-radius: 7px;
@@ -126,13 +135,39 @@
 
 .date-field__day.is-selected:hover { background: #0b5c55; color: #fff; }
 
+.date-field__day:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.date-field__day:disabled:hover { background: transparent; color: #14181d; }
+
 .date-field__foot {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
     margin-top: 9px;
     padding-top: 9px;
     border-top: 1px solid #e2e6ea;
 }
+
+/* Pushed to the right edge, whatever sits before it. */
+.date-field__link--end { margin-left: auto; }
+
+.date-field__chip {
+    border: 1px solid #e2e6ea;
+    background: #fff;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    color: #5b6572;
+    cursor: pointer;
+}
+
+.date-field__chip:hover { border-color: #0f766e; background: #e2f1ef; color: #0b5c55; }
 
 .date-field__link {
     border: 0;

@@ -32,12 +32,14 @@
                                 <select name="frequency" class="form-control" title="{{ __('Choose which payroll run should include this deduction') }}"><option value="monthly">{{ __('Every Monthly Payroll') }}</option><option value="weekly">{{ __('Every Weekly Payroll') }}</option><option value="one_time">{{ __('One Payroll Only') }}</option></select>
                             </div>
                             <div class="col-md-2">
-                                <label>{{ __('Start Date') }}</label>
-                                <input type="text" name="effective_from" class="form-control datetimepicker" value="{{ now()->toDateString() }}" placeholder="{{ __('Deduct from date') }}" title="{{ __('Payroll can deduct this record from this date') }}" required>
+                                <x-date-field name="effective_from" :label="__('Start Date')" :value="now()->toDateString()"
+                                              :placeholder="__('Deduct from date')" :title="__('Payroll can deduct this record from this date')"
+                                              wrapper-class="" required />
                             </div>
                             <div class="col-md-2">
-                                <label>{{ __('End Date') }}</label>
-                                <input type="text" name="effective_to" class="form-control datetimepicker" placeholder="{{ __('Optional stop date') }}" title="{{ __('Leave empty for an ongoing deduction') }}">
+                                <x-date-field name="effective_to" :label="__('End Date')"
+                                              :placeholder="__('Optional stop date')" :title="__('Leave empty for an ongoing deduction')"
+                                              min-from="effective_from" wrapper-class="" />
                             </div>
                             <div class="col-md-2">
                                 <label>{{ __('Record Status') }}</label>

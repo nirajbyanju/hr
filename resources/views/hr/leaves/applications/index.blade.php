@@ -54,12 +54,11 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label>{{ __('Start Date') }}</label>
-                                <input type="text" name="start_date" class="form-control leave-date-picker" value="{{ old('start_date') }}" placeholder="{{ __('YYYY-MM-DD') }}" autocomplete="off" required>
+                                <x-date-field name="start_date" :label="__('Start Date')" wrapper-class="" required />
                             </div>
                             <div class="col-md-2">
-                                <label>{{ __('End Date') }}</label>
-                                <input type="text" name="end_date" class="form-control leave-date-picker" value="{{ old('end_date') }}" placeholder="{{ __('YYYY-MM-DD') }}" autocomplete="off" required>
+                                {{-- Mirrors the after_or_equal:start_date rule on StoreLeaveApplicationRequest. --}}
+                                <x-date-field name="end_date" :label="__('End Date')" min-from="start_date" wrapper-class="" required />
                             </div>
                             <div class="col-md-2">
                                 <label>{{ __('Half Day') }}</label>
@@ -146,14 +145,6 @@
 @push('scripts')
 <script>
 (function () {
-    if ($.fn.datepicker) {
-        $('.leave-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    }
-
     var halfDaySelect = document.getElementById('is_half_day');
     var halfDaySessionGroup = document.getElementById('half_day_session_group');
     function toggleHalfDaySession() {

@@ -105,8 +105,8 @@
                             <div class="col-md-1"><input type="number" step="0.01" min="0" max="100" name="interest_rate_percent" class="form-control" value="{{ old('interest_rate_percent', $loan->interest_rate_percent) }}"></div>
                             <div class="col-md-1"><input type="number" min="1" name="installment_count" class="form-control loan-installment-count" value="{{ old('installment_count', $loan->installment_count) }}" required></div>
                             <div class="col-md-2"><input type="number" step="0.01" min="0" name="installment_amount" class="form-control loan-installment-amount" value="{{ old('installment_amount', $loan->installment_amount) }}" readonly></div>
-                            <div class="col-md-2"><input type="text" name="issued_date" class="form-control datetimepicker" value="{{ old('issued_date', $loan->issued_date) }}" required></div>
-                            <div class="col-md-2"><input type="text" name="first_installment_date" class="form-control datetimepicker" value="{{ old('first_installment_date', $loan->first_installment_date) }}"></div>
+                            <div class="col-md-2"><x-date-field name="issued_date" :value="$loan->issued_date" :placeholder="__('Issued')" wrapper-class="" required /></div>
+                            <div class="col-md-2"><x-date-field name="first_installment_date" :value="$loan->first_installment_date" :placeholder="__('First due')" wrapper-class="" /></div>
                             <div class="col-md-2"><select name="status" class="form-control">@foreach(['active','paused','closed'] as $status)<option value="{{ $status }}" {{ old('status', $loan->status)===$status?'selected':'' }}>{{ __(ucfirst($status)) }}</option>@endforeach</select></div>
                             <div class="col-md-7"><input type="text" name="remarks" class="form-control" value="{{ old('remarks', $loan->remarks) }}" placeholder="{{ __('Remarks') }}"></div>
                             <div class="col-md-3"><button class="btn btn-custom" type="submit"><i class="icon-refresh"></i> {{ __('Reschedule') }}</button></div>
@@ -153,7 +153,7 @@
                                                 <form method="POST" action="{{ route('payroll.loan-installments.paid', $installment) }}" class="d-flex gap-2">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <input type="text" name="paid_date" class="form-control datetimepicker form-control-compact-date" value="{{ now()->toDateString() }}">
+                                                    <x-date-field name="paid_date" :value="now()->toDateString()" wrapper-class="" input-class="form-control-compact-date" />
                                                     <button class="btn btn-custom btn-sm" type="submit"><i class="icon-check"></i> {{ __('Paid') }}</button>
                                                 </form>
                                             @else

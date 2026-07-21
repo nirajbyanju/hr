@@ -25,8 +25,8 @@
             <div class="col-md-2"><select name="priority_id" class="form-control"><option value="0">{{ __('All Priorities') }}</option>@foreach($priorities as $priority)<option value="{{ $priority->id }}" {{ (int)$filters['priority_id']===(int)$priority->id?'selected':'' }}>{{ $priority->name }}</option>@endforeach</select></div>
             <div class="col-md-2"><select name="status_id" class="form-control"><option value="0">{{ __('All Status') }}</option>@foreach($statuses as $status)<option value="{{ $status->id }}" {{ (int)$filters['status_id']===(int)$status->id?'selected':'' }}>{{ $status->name }}</option>@endforeach</select></div>
             <div class="col-md-2"><select name="tag_id" class="form-control"><option value="0">{{ __('All Tags') }}</option>@foreach($tags as $tag)<option value="{{ $tag->id }}" {{ (int)$filters['tag_id']===(int)$tag->id?'selected':'' }}>{{ $tag->name }}</option>@endforeach</select></div>
-            <div class="col-md-2"><input type="date" name="due_from" value="{{ $filters['due_from'] }}" class="form-control" placeholder="{{ __('Due from') }}"></div>
-            <div class="col-md-2"><input type="date" name="due_to" value="{{ $filters['due_to'] }}" class="form-control" placeholder="{{ __('Due to') }}"></div>
+            <div class="col-md-2"><x-date-field name="due_from" :value="$filters['due_from']" :placeholder="__('Due from')" wrapper-class="" /></div>
+            <div class="col-md-2"><x-date-field name="due_to" :value="$filters['due_to']" :placeholder="__('Due to')" wrapper-class="" /></div>
             <div class="col-md-1"><select name="per_page" class="form-control">@foreach([10,20,50,100] as $size)<option value="{{ $size }}" {{ (int)$filters['per_page']===$size?'selected':'' }}>{{ $size }}</option>@endforeach</select></div>
             <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-custom"><i class="icon-magnifier"></i> {{ __('Filter') }}</button><a href="{{ route('tasks.index') }}" class="btn btn-custom-default"><i class="icon-refresh"></i> {{ __('Reset') }}</a></div>
         </form>

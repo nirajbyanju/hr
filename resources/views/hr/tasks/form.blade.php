@@ -43,8 +43,8 @@
                 </div>
             @endif
 
-            <div class="col-md-3"><label>{{ __('Start Date') }}</label><input type="text" name="start_date" value="{{ old('start_date', $task->start_date ?? '') }}" class="form-control task-date-picker" placeholder="{{ __('YYYY-MM-DD') }}"></div>
-            <div class="col-md-3"><label>{{ __('Due Date') }}</label><input type="text" name="due_date" value="{{ old('due_date', $task->due_date ?? '') }}" class="form-control task-date-picker" placeholder="{{ __('YYYY-MM-DD') }}"></div>
+            <div class="col-md-3"><x-date-field name="start_date" :label="__('Start Date')" :value="$task->start_date ?? ''" wrapper-class="" /></div>
+            <div class="col-md-3"><x-date-field name="due_date" :label="__('Due Date')" :value="$task->due_date ?? ''" min-from="start_date" wrapper-class="" /></div>
             <div class="col-md-3"><label>{{ __('Estimated Hours') }}</label><input type="number" min="0" step="0.01" name="estimated_hours" value="{{ old('estimated_hours', $task->estimated_hours ?? '') }}" class="form-control"></div>
             <div class="col-md-3"><label>{{ __('Actual Hours') }}</label><input type="number" min="0" step="0.01" name="actual_hours" value="{{ old('actual_hours', $task->actual_hours ?? '') }}" class="form-control"></div>
 
@@ -58,9 +58,6 @@
 @push('scripts')
 <script>
 (function () {
-    if ($.fn.datepicker) {
-        $('.task-date-picker').datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true });
-    }
     if ($.fn.select2) {
         $('.js-example-basic-single, .js-example-basic-multiple').select2();
     }

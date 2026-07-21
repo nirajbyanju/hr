@@ -15,7 +15,6 @@
     <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/main.css') }}">
     <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/jquery-jvectormap-2.0.3.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.11/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <script src="{{ asset(config('madpos_ui.assets_base').'/js/vendor/jquery-3.2.1.min.js') }}"></script>
@@ -23,6 +22,7 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/date-field.css') }}">
+    <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/required-field.css') }}">
     @include('partials.template.theme-vars')
     @stack('styles')
 </head>

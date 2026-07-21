@@ -69,15 +69,18 @@
                     <p>Control whether this account can sign in, and for how long.</p>
                 </div>
 
-                <label class="field">
-                    <span class="lab">Expiry date</span>
-                    <input class="input" type="date" name="expires_on" value="{{ old('expires_on', optional($admin->expires_on)->format('Y-m-d')) }}">
-                    <div class="help">
-                        After this date the account can no longer sign in, and an open session is ended on the next request.
-                        Leave blank for no expiry.
-                    </div>
-                    @error('expires_on')<div class="err">{{ $message }}</div>@enderror
-                </label>
+                @include('platform.partials.date-field', [
+                    'name' => 'expires_on',
+                    'label' => 'Expiry date',
+                    'value' => old('expires_on', optional($admin->expires_on)->format('Y-m-d')),
+                    'placeholder' => 'No expiry',
+                    'help' => 'After this date the account can no longer sign in, and an open session is ended on the next request. Leave blank for no expiry.',
+                    'presets' => [
+                        ['label' => '3 months', 'months' => 3],
+                        ['label' => '6 months', 'months' => 6],
+                        ['label' => '1 year', 'months' => 12],
+                    ],
+                ])
 
                 @if($isSelf)
                     <div class="note">

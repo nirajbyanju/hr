@@ -3,10 +3,25 @@
     'value' => null,
     'label' => null,
     'required' => false,
+    // Locked fields still convert for display (a BS company must not see one
+    // stray AD date), so they render the same markup minus the picker binding.
+    'readonly' => false,
     'placeholder' => null,
     'id' => null,
     'help' => null,
     'wrapperClass' => 'form-group',
+    // Extra classes for the visible input, e.g. 'form-control-sm'. A passed
+    // class="" attribute cannot be used for this: the component owns that
+    // attribute so .form-control and .date-field__display are never lost.
+    'inputClass' => '',
+    // Names of sibling date fields bounding this one, e.g. an end date passing
+    // minFrom="start_date". Resolved inside this field's own <form>, so an
+    // index screen carrying both a filter and a create form stays unambiguous.
+    'minFrom' => null,
+    'maxFrom' => null,
+    // Quick-fill chips: [['label' => '1 year', 'months' => 12], ...], counted
+    // from minFrom's date when there is one.
+    'presets' => [],
 ])
 
 @php
@@ -37,17 +52,21 @@
         </label>
     @endif
 
-    <div class="date-field" data-date-field data-system="{{ $isNepali ? 'bs' : 'ad' }}">
+    <div class="date-field" @unless($readonly) data-date-field @endunless data-system="{{ $isNepali ? 'bs' : 'ad' }}"
+         @if($minFrom) data-min-from="{{ $minFrom }}" @endif
+         @if($maxFrom) data-max-from="{{ $maxFrom }}" @endif
+         @if(! empty($presets)) data-presets="{{ json_encode($presets) }}" @endif>
         {{-- What the user sees and the picker writes into. Never submitted. --}}
         <input
             type="text"
             id="{{ $fieldId }}"
-            class="form-control date-field__display {{ $fieldErrors->has($name) ? 'is-invalid' : '' }}"
+            class="form-control date-field__display {{ $inputClass }} {{ $fieldErrors->has($name) ? 'is-invalid' : '' }}"
             value="{{ $shownValue }}"
             placeholder="{{ $hint }}"
             autocomplete="off"
             data-date-display
             {{ $required ? 'required' : '' }}
+            {{ $readonly ? 'readonly' : '' }}
             {{ $attributes->except(['class']) }}
         >
 
@@ -56,8 +75,10 @@
              calendar the company picked. --}}
         <input type="hidden" name="{{ $name }}" value="{{ $adValue }}" data-date-value>
 
-        <button type="button" class="date-field__toggle" data-date-toggle
-                aria-label="{{ __('Open calendar') }}" tabindex="-1">&#128197;</button>
+        @unless($readonly)
+            <button type="button" class="date-field__toggle" data-date-toggle
+                    aria-label="{{ __('Open calendar') }}" tabindex="-1">&#128197;</button>
+        @endunless
     </div>
 
     @if($isNepali)

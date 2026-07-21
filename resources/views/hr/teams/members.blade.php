@@ -36,8 +36,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-2"><label>{{ __('Joined') }}</label><input type="text" name="members[{{ $idx }}][joined_on]" value="{{ $row['joined_on'] ?? '' }}" class="form-control team-date-picker" placeholder="{{ __('YYYY-MM-DD') }}"></div>
-                        <div class="col-md-2"><label>{{ __('Left') }}</label><input type="text" name="members[{{ $idx }}][left_on]" value="{{ $row['left_on'] ?? '' }}" class="form-control team-date-picker" placeholder="{{ __('YYYY-MM-DD') }}"></div>
+                        <div class="col-md-2"><x-date-field :name="'members['.$idx.'][joined_on]'" :label="__('Joined')" :value="$row['joined_on'] ?? ''" wrapper-class="" /></div>
+                        <div class="col-md-2"><x-date-field :name="'members['.$idx.'][left_on]'" :label="__('Left')" :value="$row['left_on'] ?? ''" wrapper-class="" /></div>
                         <div class="col-md-1"><label>{{ __('Active') }}</label><select name="members[{{ $idx }}][is_active]" class="form-control"><option value="1" {{ (string)($row['is_active'] ?? '1') === '1' ? 'selected' : '' }}>{{ __('Yes') }}</option><option value="0" {{ (string)($row['is_active'] ?? '1') === '0' ? 'selected' : '' }}>{{ __('No') }}</option></select></div>
                         <div class="col-md-1"><button type="button" class="btn btn-custom-default btn-sm remove-team-member"><i class="icon-trash"></i></button></div>
                     </div>
@@ -60,6 +60,12 @@
     'code' => $employee->employee_code,
     'department' => $employee->department?->name ?? 'No Department',
 ])->values())
+{{-- Markup for a new row's date fields, rendered once by <x-date-field> so the
+     JS-built rows below cannot drift from the component (or lose BS support). --}}
+<template id="team-member-date-templates">
+    <span data-field="joined_on"><x-date-field name="members[__INDEX__][joined_on]" :label="__('Joined')" wrapper-class="" /></span>
+    <span data-field="left_on"><x-date-field name="members[__INDEX__][left_on]" :label="__('Left')" wrapper-class="" /></span>
+</template>
 <script>
 (function () {
     var wrapper = document.getElementById('team-members-wrapper');
@@ -67,10 +73,17 @@
     if (!wrapper || !addBtn) return;
     var employees = @json($memberEmployeeOptions);
 
-    function setupDatePickers(ctx) {
-        if ($.fn.datepicker) {
-            $(ctx).find('.team-date-picker').datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true });
-        }
+    var dateTemplates = document.getElementById('team-member-date-templates');
+
+    /** A row's date field, stamped from the component-rendered template. */
+    function dateFieldHtml(field, index) {
+        var node = dateTemplates.content.querySelector('[data-field="' + field + '"]');
+
+        return node.innerHTML
+            .replace(/__INDEX__/g, index)
+            // ids are unique per render, so a clone has to be re-uniqued
+            .replace(/id="([^"]+)"/g, 'id="$1-' + index + '"')
+            .replace(/for="([^"]+)"/g, 'for="$1-' + index + '"');
     }
 
     function setupSelect2(ctx) {
@@ -100,13 +113,13 @@
         row.innerHTML = `
             <div class="col-md-4"><label>{{ __('Employee') }}</label><select name="members[${i}][employee_id]" class="form-control js-example-basic-single" required>${employeeOptions()}</select></div>
             <div class="col-md-2"><label>{{ __('Role') }}</label><select name="members[${i}][member_role]" class="form-control" required><option value="lead">{{ __('Lead') }}</option><option value="member" selected>{{ __('Member') }}</option><option value="observer">{{ __('Observer') }}</option></select></div>
-            <div class="col-md-2"><label>{{ __('Joined') }}</label><input type="text" name="members[${i}][joined_on]" class="form-control team-date-picker" placeholder="YYYY-MM-DD"></div>
-            <div class="col-md-2"><label>{{ __('Left') }}</label><input type="text" name="members[${i}][left_on]" class="form-control team-date-picker" placeholder="YYYY-MM-DD"></div>
+            <div class="col-md-2">${dateFieldHtml('joined_on', i)}</div>
+            <div class="col-md-2">${dateFieldHtml('left_on', i)}</div>
             <div class="col-md-1"><label>{{ __('Active') }}</label><select name="members[${i}][is_active]" class="form-control"><option value="1" selected>{{ __('Yes') }}</option><option value="0">{{ __('No') }}</option></select></div>
             <div class="col-md-1"><button type="button" class="btn btn-custom-default btn-sm remove-team-member"><i class="icon-trash"></i></button></div>
         `;
         wrapper.appendChild(row);
-        setupDatePickers(row);
+        window.initDateFields(row);
         setupSelect2(row);
     });
 
@@ -117,7 +130,6 @@
         if (row) row.remove();
     });
 
-    setupDatePickers(document);
     setupSelect2(document);
 })();
 </script>

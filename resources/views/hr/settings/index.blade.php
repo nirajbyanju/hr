@@ -197,6 +197,36 @@
                             </div>
                         </div>
 
+                        <hr>
+                        <h5 class="table_banner_title mb-1">{{ __('Slack Notifications') }}</h5>
+                        <p class="text-muted mb-3" style="font-size:13px;">
+                            {{ __('Post a message to a Slack channel whenever an employee checks in or out.') }}
+                            {{ __('Create an Incoming Webhook in Slack pointed at your attendance channel, then paste its URL below.') }}
+                        </p>
+                        @php($slackEnabled = (bool) old('slack_notifications_enabled', ($settings['slack_notifications_enabled'] ?? '0') === '1'))
+                        @php($slackConfigured = ! empty($settings['slack_webhook_url']))
+                        <div class="row">
+                            <div class="col-md-12 form-group">
+                                <label class="d-flex align-items-center" style="gap:8px;cursor:pointer;">
+                                    <input type="checkbox" name="slack_notifications_enabled" value="1" {{ $slackEnabled ? 'checked' : '' }}>
+                                    <span>{{ __('Enable attendance check-in / check-out notifications') }}</span>
+                                </label>
+                            </div>
+                            <div class="col-md-8 form-group">
+                                <label>{{ __('Slack Webhook URL') }}</label>
+                                <input type="password" class="form-control" name="slack_webhook_url" autocomplete="off"
+                                       placeholder="{{ $slackConfigured ? __('Leave blank to keep current webhook') : 'https://hooks.slack.com/services/…' }}">
+                                <small class="text-muted">
+                                    @if($slackConfigured)
+                                        <i class="icon-check"></i> {{ __('A webhook is currently configured. Enter a new URL to replace it.') }}
+                                    @else
+                                        {{ __('No webhook configured yet. Must be a https://hooks.slack.com/ URL.') }}
+                                    @endif
+                                </small>
+                                @error('slack_webhook_url')<div class="text-danger small">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+
                         <div class="mt-3">
                             <button type="submit" class="btn btn-custom">
                                 <i class="icon-check"></i> {{ __('Save Settings') }}

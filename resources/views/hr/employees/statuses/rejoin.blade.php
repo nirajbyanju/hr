@@ -29,7 +29,7 @@
 
                         <div class="col-md-4">
                             <label>{{ __('Rejoin Date') }}</label>
-                            <input type="text" name="rejoin_date" class="form-control status-date-picker" value="{{ now()->toDateString() }}" placeholder="{{ __('YYYY-MM-DD') }}" required>
+                            <x-date-field name="rejoin_date" :value="now()->toDateString()" wrapper-class="" required />
                         </div>
 
                         <div class="col-md-4">
@@ -94,16 +94,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-(function () {
-    if ($.fn.datepicker) {
-        $('.status-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    }
-})();
-</script>
-@endpush

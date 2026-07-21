@@ -17,7 +17,6 @@
 <script src="{{ asset(config('madpos_ui.assets_base').'/js/jquery-jvectormap-2.0.3.min.js') }}"></script>
 <script src="{{ asset(config('madpos_ui.assets_base').'/js/jquery-jvectormap-world-mill.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <style>
     .table .btn.btn-sm.action-icon-btn {
         position: relative;

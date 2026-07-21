@@ -27,8 +27,8 @@
                         <div class="col-md-1"><input type="number" min="1" name="installment_count" class="form-control loan-installment-count" placeholder="{{ __('Count') }}" required></div>
                         <div class="col-md-2"><input type="number" step="0.01" min="0" name="installment_amount" class="form-control loan-installment-amount" placeholder="{{ __('Installment Amount') }}" readonly></div>
                         <div class="col-md-1"><button class="btn btn-custom w-100" type="submit"><i class="icon-plus"></i></button></div>
-                        <div class="col-md-2"><input type="text" name="issued_date" class="form-control datetimepicker" value="{{ now()->toDateString() }}" placeholder="{{ __('Issued') }}" required></div>
-                        <div class="col-md-2"><input type="text" name="first_installment_date" class="form-control datetimepicker" placeholder="{{ __('First due') }}"></div>
+                        <div class="col-md-2"><x-date-field name="issued_date" :value="now()->toDateString()" :placeholder="__('Issued')" wrapper-class="" required /></div>
+                        <div class="col-md-2"><x-date-field name="first_installment_date" :placeholder="__('First due')" wrapper-class="" /></div>
                         @if($canManageLoans)
                             <div class="col-md-2"><select name="status" class="form-control"><option value="active">{{ __('Active') }}</option><option value="pending_supervisor">{{ __('Pending Supervisor') }}</option><option value="pending_final">{{ __('Pending Final') }}</option><option value="paused">{{ __('Paused') }}</option><option value="closed">{{ __('Closed') }}</option></select></div>
                         @elseif($canApplyLoan)

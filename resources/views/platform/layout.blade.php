@@ -153,8 +153,10 @@
             border-radius:10px; padding:11px 13px; }
 
         /* ---- Forms ---- */
-        label.field { display:block; margin-bottom:16px; }
-        label.field .lab { display:block; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+        .field { display:block; margin-bottom:16px; }
+        .field .lab { display:block; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-2); margin-bottom:6px; }
+        /* Required marker, driven by the field's own `required` attribute. */
+        .field:has(:is(input, select, textarea)[required]) .lab::after { content:" *"; color:var(--danger); font-weight:700; }
         .input { width:100%; height:44px; border:1px solid var(--line); border-radius:10px; padding:0 13px; font-size:15px; background:#fff; color:var(--ink); }
         .input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
         .help { font-size:12.5px; color:var(--ink-3); margin-top:5px; }
@@ -210,6 +212,7 @@
             .filters select.input, .filters .btn { flex:1; }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset(config('madpos_ui.assets_base').'/css/date-field.css') }}">
 </head>
 <body>
     @php($me = auth('central')->user())
@@ -256,5 +259,8 @@
         @if(session('error'))<div class="flash flash-err">{{ session('error') }}</div>@endif
         @yield('content')
     </div>
+
+    {{-- The same picker the tenant app uses; see public/assets/js/date-field.js. --}}
+    <script src="{{ asset(config('madpos_ui.assets_base').'/js/date-field.js') }}"></script>
 </body>
 </html>

@@ -51,6 +51,13 @@ class UpdateSettingsRequest extends FormRequest
             'mail_from_address' => ['nullable', 'email', 'max:180'],
             'mail_from_name' => ['nullable', 'string', 'max:180'],
 
+            // Slack attendance notifications. The webhook is a credential, so it
+            // is only accepted as a real Slack Incoming Webhook URL — this also
+            // guards the server-side POST against being pointed at an internal
+            // host (SSRF). Blank on save keeps the stored value (see the service).
+            'slack_notifications_enabled' => ['nullable', 'boolean'],
+            'slack_webhook_url' => ['nullable', 'string', 'url', 'max:255', 'starts_with:https://hooks.slack.com/'],
+
             'company_logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:4096'],
             'company_favicon' => ['nullable', 'file', 'mimes:png,ico,jpg,jpeg,svg,webp', 'max:2048'],
         ];

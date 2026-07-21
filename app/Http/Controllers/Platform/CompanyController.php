@@ -60,6 +60,29 @@ class CompanyController extends Controller
     }
 
     /**
+     * The form asks for the local part only and renders the domain beside it,
+     * so "admin" arrives here rather than "admin@ktm.com". Complete it from
+     * the submitted domain. A value that already carries its own @domain is
+     * left untouched and checked by assertAdminEmailMatchesDomain().
+     */
+    private function attachDomainToAdminEmail(Request $request): void
+    {
+        $email = trim((string) $request->input('admin_email'));
+        $domain = (string) $request->input('domain');
+
+        if ($email === '' || $domain === '') {
+            return;
+        }
+
+        // A trailing @ is what you get from typing "admin@" out of habit.
+        $local = rtrim($email, '@');
+
+        if ($local !== '' && ! str_contains($local, '@')) {
+            $request->merge(['admin_email' => $local . '@' . $domain]);
+        }
+    }
+
+    /**
      * The admin has to be reachable at the company domain, otherwise the
      * account we create could never resolve a tenant at login.
      */
@@ -86,6 +109,7 @@ class CompanyController extends Controller
     public function store(Request $request, TenantProvisioningService $provisioning): RedirectResponse
     {
         $this->normaliseDomain($request);
+        $this->attachDomainToAdminEmail($request);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -140,6 +164,7 @@ class CompanyController extends Controller
     public function update(Request $request, Company $company): RedirectResponse
     {
         $this->normaliseDomain($request);
+        $this->attachDomainToAdminEmail($request);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],

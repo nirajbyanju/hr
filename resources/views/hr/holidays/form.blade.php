@@ -71,19 +71,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-    (function () {
-        const $holidayDate = $('#holiday_date');
-        if (!$holidayDate.length || !$.fn.datepicker) {
-            return;
-        }
-
-        $holidayDate.datepicker('destroy').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    })();
-</script>
-@endpush

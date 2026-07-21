@@ -31,7 +31,7 @@
 
                 <label class="field">
                     <span class="lab">Company domain</span>
-                    <input class="input" type="text" name="domain" value="{{ old('domain', $company->domain) }}"
+                    <input class="input" type="text" name="domain" id="company_domain" value="{{ old('domain', $company->domain) }}"
                            placeholder="ktm.com" autocapitalize="none" spellcheck="false" required>
                     <div class="help">
                         Staff sign in with their email at this domain — someone@ktm.com signs in to this company.
@@ -63,19 +63,30 @@
                 </div>
 
                 <div class="grid-2">
-                    <label class="field">
-                        <span class="lab">Start date</span>
-                        <input class="input" type="date" name="starts_on" value="{{ old('starts_on', optional($company->starts_on)->format('Y-m-d')) }}">
-                        @error('starts_on')<div class="err">{{ $message }}</div>@enderror
-                    </label>
+                    @include('platform.partials.date-field', [
+                        'name' => 'starts_on',
+                        'label' => 'Start date',
+                        'value' => old('starts_on', optional($company->starts_on)->format('Y-m-d')),
+                        'placeholder' => 'No start date',
+                    ])
 
-                    <label class="field">
-                        <span class="lab">Expiry date</span>
-                        <input class="input" type="date" name="expires_on" value="{{ old('expires_on', optional($company->expires_on)->format('Y-m-d')) }}">
-                        <div class="help">Leave blank for no expiry.</div>
-                        @error('expires_on')<div class="err">{{ $message }}</div>@enderror
-                    </label>
+                    @include('platform.partials.date-field', [
+                        'name' => 'expires_on',
+                        'label' => 'Expiry date',
+                        'value' => old('expires_on', optional($company->expires_on)->format('Y-m-d')),
+                        'placeholder' => 'No expiry',
+                        'help' => 'Leave blank for no expiry.',
+                        'minFrom' => 'starts_on',
+                        'presets' => [
+                            ['label' => '3 months', 'months' => 3],
+                            ['label' => '6 months', 'months' => 6],
+                            ['label' => '1 year', 'months' => 12],
+                            ['label' => '2 years', 'months' => 24],
+                        ],
+                    ])
                 </div>
+
+                <div class="help" id="term_summary" hidden></div>
 
                 <label class="field">
                     <span class="lab">User account limit</span>
@@ -99,10 +110,16 @@
                     <p>{{ $mode === 'create' ? 'Create the first company administrator.' : 'Change the company admin email or set a new password.' }}</p>
                 </div>
 
+                @php($adminEmail = (string) old('admin_email', $adminUser?->email))
+                @php($adminLocal = \Illuminate\Support\Str::before($adminEmail, '@'))
                 <label class="field">
                     <span class="lab">Admin email</span>
-                    <input class="input" type="email" name="admin_email" value="{{ old('admin_email', $adminUser?->email) }}" {{ $mode === 'create' ? 'required' : '' }}>
-                    <div class="help">Must use the company domain above, e.g. admin@ktm.com.</div>
+                    <div class="prefixed">
+                        <input class="input" type="text" name="admin_email" id="admin_email" value="{{ $adminLocal }}"
+                               placeholder="admin" autocapitalize="none" spellcheck="false" {{ $mode === 'create' ? 'required' : '' }}>
+                        <span class="suffix" id="admin_email_suffix" data-fallback="ktm.com">{{ '@' . (old('domain', $company->domain) ?: 'ktm.com') }}</span>
+                    </div>
+                    <div class="help">The company domain above is added automatically — type the name before the @ only.</div>
                     @if($mode === 'edit' && $adminUser === null)
                         <div class="help">No admin user was found for this company.</div>
                     @endif
@@ -130,4 +147,78 @@
             </div>
         </form>
     </div>
+
+    <script>
+        // Keep the @domain shown beside the admin email in step with the domain
+        // field. The server composes the address either way; this is only so the
+        // admin can see what they are about to create.
+        (function () {
+            var domain = document.getElementById('company_domain');
+            var suffix = document.getElementById('admin_email_suffix');
+
+            if (! domain || ! suffix) {
+                return;
+            }
+
+            var sync = function () {
+                var value = domain.value.trim().toLowerCase();
+                suffix.textContent = '@' + (value || suffix.dataset.fallback);
+            };
+
+            domain.addEventListener('input', sync);
+            sync();
+        })();
+
+        // Spell out the subscription term, so a mistyped year is obvious before
+        // saving rather than after. Validation of the pair stays server-side.
+        (function () {
+            var starts = document.querySelector('[name="starts_on"]');
+            var expires = document.querySelector('[name="expires_on"]');
+            var summary = document.getElementById('term_summary');
+
+            if (! starts || ! expires || ! summary) {
+                return;
+            }
+
+            var parse = function (value) {
+                var parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+
+                return parts ? new Date(+parts[1], +parts[2] - 1, +parts[3]) : null;
+            };
+
+            var sync = function () {
+                var from = parse(starts.value);
+                var to = parse(expires.value);
+
+                if (! from || ! to) {
+                    summary.hidden = true;
+
+                    return;
+                }
+
+                if (to < from) {
+                    summary.textContent = 'The expiry date is before the start date.';
+                    summary.hidden = false;
+
+                    return;
+                }
+
+                var days = Math.round((to - from) / 86400000);
+                var months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+
+                if (to.getDate() < from.getDate()) {
+                    months--;
+                }
+
+                summary.textContent = months >= 1
+                    ? 'Term: ' + months + (months === 1 ? ' month' : ' months') + ' (' + days + ' days).'
+                    : 'Term: ' + days + (days === 1 ? ' day' : ' days') + '.';
+                summary.hidden = false;
+            };
+
+            starts.addEventListener('change', sync);
+            expires.addEventListener('change', sync);
+            sync();
+        })();
+    </script>
 @endsection

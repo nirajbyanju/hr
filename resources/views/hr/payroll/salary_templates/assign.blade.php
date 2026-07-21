@@ -56,8 +56,8 @@
                             <div class="col-md-3 form-group mb-3"><label>{{ __('Provident Fund %') }}</label><input type="number" step="0.01" min="0" max="100" name="provident_fund_percent" id="provident_fund_percent" class="form-control" value="{{ old('provident_fund_percent', 0) }}"></div>
                             <div class="col-md-3 form-group mb-3"><label>{{ __('Tax %') }}</label><input type="number" step="0.01" min="0" max="100" name="tax_percent" id="tax_percent" class="form-control" value="{{ old('tax_percent', 0) }}"></div>
                             <div class="col-md-3 form-group mb-3"><label>{{ __('CTC Amount') }}</label><input type="number" step="0.01" min="0" name="ctc_amount" class="form-control" value="{{ old('ctc_amount') }}"></div>
-                            <div class="col-md-4 form-group mb-3"><label>{{ __('Effective From') }}</label><input type="text" name="effective_from" class="form-control datetimepicker" value="{{ old('effective_from', now()->toDateString()) }}" required></div>
-                            <div class="col-md-4 form-group mb-3"><label>{{ __('Effective To') }}</label><input type="text" name="effective_to" class="form-control datetimepicker" value="{{ old('effective_to') }}"></div>
+                            <div class="col-md-4"><x-date-field name="effective_from" :label="__('Effective From')" :value="now()->toDateString()" wrapper-class="form-group mb-3" required /></div>
+                            <div class="col-md-4"><x-date-field name="effective_to" :label="__('Effective To')" min-from="effective_from" wrapper-class="form-group mb-3" /></div>
                             <div class="col-md-12 form-group mb-3"><label>{{ __('Notes') }}</label><textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea></div>
                         </div>
                         <button class="btn btn-custom" type="submit"><i class="icon-check"></i> {{ __('Assign Employee Salary') }}</button>

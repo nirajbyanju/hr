@@ -120,6 +120,8 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
     Route::patch('/dashboard/quick-notes/{privateNote}/toggle', [DashboardController::class, 'toggleQuickNote'])->middleware('permission:note.update-private')->name('dashboard.quick-notes.toggle');
     Route::patch('/dashboard/quick-notes/{privateNote}', [DashboardController::class, 'updateQuickNote'])->middleware('permission:note.update-private')->name('dashboard.quick-notes.update');
     Route::delete('/dashboard/quick-notes/{privateNote}', [DashboardController::class, 'deleteQuickNote'])->middleware('permission:note.delete-private')->name('dashboard.quick-notes.delete');
+    Route::get('/dashboard/profile', [AuthenticatedSessionController::class, 'editProfile'])->name('dashboard.profile.edit');
+    Route::put('/dashboard/profile', [AuthenticatedSessionController::class, 'updateProfile'])->name('dashboard.profile.update');
     Route::get('/dashboard/change-password', [AuthenticatedSessionController::class, 'editPassword'])->name('dashboard.password.edit');
     Route::put('/dashboard/change-password', [AuthenticatedSessionController::class, 'updatePassword'])->name('dashboard.password.update');
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('permission:settings.view')->name('settings.edit');
@@ -127,8 +129,8 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::prefix('employee/profile-updates')->name('employees.profile-updates.')->group(function (): void {
-        Route::get('/create', [EmployeeProfileUpdateRequestController::class, 'create'])->middleware('permission:employee.profile-update-request-submit')->name('create');
-        Route::post('/', [EmployeeProfileUpdateRequestController::class, 'store'])->middleware('permission:employee.profile-update-request-submit')->name('store');
+        Route::get('/create', [EmployeeProfileUpdateRequestController::class, 'create'])->name('create');
+        Route::post('/', [EmployeeProfileUpdateRequestController::class, 'store'])->name('store');
     });
 
     Route::prefix('employee/resignations')->name('employee-resignations.')->group(function (): void {

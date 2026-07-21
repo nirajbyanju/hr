@@ -74,7 +74,7 @@
                                                     <form method="POST" action="{{ route('employee-resignations.final-process', $item) }}" class="d-flex gap-2 align-items-start">
                                                         @csrf
                                                         <input type="hidden" name="action" value="approve">
-                                                        <input type="text" name="final_last_working_day" class="form-control form-control-sm resignation-date-picker" value="{{ $item->requested_last_working_day }}" placeholder="{{ __('Final LWD') }}" required>
+                                                        <x-date-field name="final_last_working_day" :value="$item->requested_last_working_day" :placeholder="__('Final LWD')" wrapper-class="" input-class="form-control-sm" required />
                                                         <button type="submit" class="btn btn-sm btn-success">{{ __('Final Approve') }}</button>
                                                     </form>
                                                     <form method="POST" action="{{ route('employee-resignations.final-process', $item) }}" class="d-flex gap-2 align-items-start">
@@ -106,16 +106,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-(function () {
-    if ($.fn.datepicker) {
-        $('.resignation-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    }
-})();
-</script>
-@endpush

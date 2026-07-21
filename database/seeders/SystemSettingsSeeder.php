@@ -21,7 +21,7 @@ class SystemSettingsSeeder extends Seeder
             'date_format' => ['value' => 'Y-m-d', 'group_name' => 'localization'],
             // A.D. by default; a Nepali company switches this in Settings.
             'date_system' => ['value' => 'ad', 'group_name' => 'localization'],
-            'time_zone' => ['value' => config('app.timezone', 'Asia/Dhaka'), 'group_name' => 'localization'],
+            'time_zone' => ['value' => config('app.timezone', 'Asia/Kathmandu'), 'group_name' => 'localization'],
             'weekend_days' => ['value' => 'sat,sun', 'group_name' => 'localization'],
             'mail_mailer' => ['value' => config('mail.default', 'smtp'), 'group_name' => 'smtp'],
             'mail_host' => ['value' => config('mail.mailers.smtp.host'), 'group_name' => 'smtp'],

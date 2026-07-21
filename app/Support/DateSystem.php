@@ -32,6 +32,8 @@ class DateSystem
     /** Setting key holding the company's display timezone. */
     public const TIMEZONE_KEY = 'time_zone';
 
+    public const DEFAULT_TIMEZONE = 'Asia/Kathmandu';
+
     /**
      * Nepali month names, indexed 1-12 to match the package's month numbering.
      *
@@ -70,9 +72,12 @@ class DateSystem
      */
     public static function timezone(): string
     {
-        $zone = (string) \App\Models\SystemSetting::getValue(self::TIMEZONE_KEY, 'UTC');
+        $zone = (string) \App\Models\SystemSetting::getValue(
+            self::TIMEZONE_KEY,
+            config('app.timezone', self::DEFAULT_TIMEZONE)
+        );
 
-        return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'UTC';
+        return in_array($zone, timezone_identifiers_list(), true) ? $zone : self::DEFAULT_TIMEZONE;
     }
 
     /**

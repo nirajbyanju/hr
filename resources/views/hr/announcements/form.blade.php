@@ -66,14 +66,7 @@
 
                             <div class="col-md-6 form-group mb-3">
                                 <label>{{ __('Expires At (Optional)') }}</label>
-                                <input
-                                    type="text"
-                                    name="expires_at"
-                                    class="form-control announcement-date-picker"
-                                    placeholder="{{ __('YYYY-MM-DD') }}"
-                                    autocomplete="off"
-                                    value="{{ old('expires_at') }}"
-                                >
+                                <x-date-field name="expires_at" min-from="today" wrapper-class="" />
                             </div>
 
                             <div class="col-md-6 form-group mb-3">
@@ -117,14 +110,6 @@
                 });
             }
 
-            if (window.jQuery && $.fn.datepicker) {
-                $('.announcement-date-picker').datepicker({
-                    format: 'yyyy-mm-dd',
-                    autoclose: true,
-                    todayHighlight: true,
-                    orientation: 'bottom auto'
-                });
-            }
 
             const $audience = $('select[name=\"audience_type\"]');
             const $employeeBlock = $('.audience-employees-block');

@@ -15,10 +15,10 @@
                             <div class="col-md-2"><select name="pay_frequency" class="form-control" required><option value="monthly">{{ __('Monthly') }}</option><option value="weekly">{{ __('Weekly') }}</option></select></div>
                             <div class="col-md-3"><select name="employee_id" class="form-control js-example-basic-single"><option value="0">{{ __('All Active Employees') }}</option>@foreach($employees as $employee)<option value="{{ $employee->id }}">{{ trim($employee->first_name.' '.$employee->last_name) }} ({{ $employee->employee_code }})</option>@endforeach</select></div>
                             <div class="col-md-2"><input type="text" name="period_label" class="form-control" value="{{ now()->format('M Y') }}" placeholder="{{ __('Period label') }}"></div>
-                            <div class="col-md-2"><input type="text" name="period_start" class="form-control datetimepicker" value="{{ now()->startOfMonth()->toDateString() }}" required></div>
-                            <div class="col-md-2"><input type="text" name="period_end" class="form-control datetimepicker" value="{{ now()->endOfMonth()->toDateString() }}" required></div>
+                            <div class="col-md-2"><x-date-field name="period_start" :value="now()->startOfMonth()->toDateString()" :placeholder="__('Period start')" wrapper-class="" required /></div>
+                            <div class="col-md-2"><x-date-field name="period_end" :value="now()->endOfMonth()->toDateString()" :placeholder="__('Period end')" min-from="period_start" wrapper-class="" required /></div>
                             <div class="col-md-1"><button class="btn btn-custom w-100" type="submit" title="{{ __('Generate Draft') }}"><i class="icon-plus"></i></button></div>
-                            <div class="col-md-2"><input type="text" name="pay_date" class="form-control datetimepicker" placeholder="{{ __('Pay date') }}"></div>
+                            <div class="col-md-2"><x-date-field name="pay_date" :placeholder="__('Pay date')" wrapper-class="" /></div>
                             <div class="col-md-2"><input type="number" min="1" max="53" name="payroll_week" class="form-control" placeholder="{{ __('Week') }}"></div>
                         </form>
                     @endif

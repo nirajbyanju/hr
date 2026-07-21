@@ -57,10 +57,6 @@ $(document).ready(function() {
         });
     }
 
-    $('.datetimepicker').datepicker({
-            format: 'yyyy-mm-dd'
-        });
-
     $(".switch-label").click(function() {
         $("#product_color")
             .val($(this).data("value"))

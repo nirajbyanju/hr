@@ -79,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
                 'canEmployeeView' => $isEmployeeAdmin && $can('employee.view'),
                 'canEmployeeCreate' => $isEmployeeAdmin && $can('employee.create'),
                 'canEmployeeUpdate' => $isEmployeeAdmin && $can('employee.update'),
-                'canEmployeeProfileUpdateSubmit' => ($user?->employee !== null) && $can('employee.profile-update-request-submit'),
+                'canEmployeeProfileUpdateSubmit' => $user?->employee !== null,
                 'canResignationApply' => ($user?->employee !== null) && $canAny(['employee.resignation-apply', 'employee.resignation-view']),
                 'canResignationSupervisorApprove' => $can('employee.resignation-supervisor-approve'),
                 'canResignationFinalApprove' => $can('employee.resignation-final-approve'),

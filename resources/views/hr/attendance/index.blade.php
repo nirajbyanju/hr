@@ -27,7 +27,8 @@
                     <h5 class="table_banner_title mb-3">{{ __('Manual Attendance Entry') }}</h5>
                     <form method="POST" action="{{ route('attendance.store') }}" class="row g-2">
                         @csrf
-                        @php($currentAttendanceTime = now()->format('h:i A'))
+                        @php($currentAttendanceTime = optional(\App\Support\DateSystem::inCompanyZone(now()))->format('h:i A') ?? now()->format('h:i A'))
+                        @php($currentAttendanceDate = optional(\App\Support\DateSystem::inCompanyZone(now()))->format('Y-m-d') ?? now()->format('Y-m-d'))
                         @if($canManageAttendance && $hasAllAccess)
                             <div class="col-md-3">
                                 <label>{{ __('Employee') }}</label>
@@ -42,15 +43,12 @@
                             </div>
                         @endif
                         <div class="col-md-3">
-                             <label>{{ __('Date') }}</label>
-                            <input type="text"
-                                name="attendance_date"
-                                class="form-control {{ $canEditAttendanceDateTime ? 'attendance-date-picker' : '' }}" placeholder="{{ __('YYYY-MM-DD') }}"
-                                autocomplete="off"
-                                value="{{ $canEditAttendanceDateTime ? old('attendance_date', now()->format('Y-m-d')) : now()->format('Y-m-d') }}"
-                                {{ $canEditAttendanceDateTime ? '' : 'readonly' }}
-                                required
-                            >
+                            {{-- Without the date-time permission the entry is pinned to today,
+                                 so the field is shown but not pickable. --}}
+                            <x-date-field name="attendance_date" :label="__('Date')"
+                                          :value="$currentAttendanceDate"
+                                          :readonly="! $canEditAttendanceDateTime"
+                                          wrapper-class="" required />
                         </div>
                         @if($canManageAttendance)
                             <div class="col-md-2">
@@ -77,7 +75,7 @@
                                 class="form-control {{ $canEditAttendanceDateTime ? 'attendance-time-picker' : '' }}"
                                 placeholder="09:01 AM"
                                 autocomplete="off"
-                                value="{{ $canEditAttendanceDateTime ? old('entry_time') : $currentAttendanceTime }}"
+                                value="{{ old('entry_time', $currentAttendanceTime) }}"
                                 {{ $canEditAttendanceDateTime ? '' : 'readonly' }}
                                 required
                             >
@@ -130,11 +128,11 @@
 
                     <form method="GET" class="row g-2 mb-3">
                         <div class="col-md-2">
-                            <input type="text" name="from_date" class="form-control attendance-date-picker" value="{{ $filters['from_date'] }}" placeholder="{{ __('From date') }}">
-                            </div>
+                            <x-date-field name="from_date" :value="$filters['from_date']" :placeholder="__('From date')" wrapper-class="" />
+                        </div>
                         <div class="col-md-2">
-                            <input type="text" name="to_date" class="form-control attendance-date-picker" value="{{ $filters['to_date'] }}" placeholder="{{ __('To date') }}">
-                            </div>
+                            <x-date-field name="to_date" :value="$filters['to_date']" :placeholder="__('To date')" wrapper-class="" />
+                        </div>
                         <div class="col-md-3">
                             <select name="employee_id" class="form-control js-example-basic-single">
                                 <option value="0">{{ __('All Employees') }}</option>
@@ -212,16 +210,6 @@
 <script>
 
     (function () {
-
-        if (!$.fn.datepicker) {
-            return;
-        }
-
-        $('.attendance-date-picker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
 
         if ($.fn.timepicker) {
             $('.attendance-time-picker').timepicker({

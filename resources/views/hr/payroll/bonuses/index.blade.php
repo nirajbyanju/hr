@@ -27,7 +27,7 @@
                             </div>
                             <div class="col-md-1"><input type="number" step="0.01" min="0" max="100" name="percentage" class="form-control" placeholder="%"></div>
                             <div class="col-md-1"><input type="number" step="0.01" min="0" name="amount" class="form-control" placeholder="{{ __('Amount') }}"></div>
-                            <div class="col-md-2"><input type="text" name="bonus_date" class="form-control datetimepicker" value="{{ now()->toDateString() }}" placeholder="{{ __('Bonus date') }}" required></div>
+                            <div class="col-md-2"><x-date-field name="bonus_date" :value="now()->toDateString()" :placeholder="__('Bonus date')" wrapper-class="" required /></div>
                             <div class="col-md-1"><input type="text" name="bonus_type" class="form-control" value="policy" placeholder="{{ __('Type') }}" required></div>
                             <div class="col-md-12"><button class="btn btn-custom" type="submit"><i class="icon-plus"></i> {{ __('Generate Bonus') }}</button></div>
                             <div class="col-md-12"><textarea name="remarks" class="form-control" rows="2" placeholder="{{ __('Remarks') }}"></textarea></div>

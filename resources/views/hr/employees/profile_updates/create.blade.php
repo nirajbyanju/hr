@@ -100,8 +100,9 @@
                                             </select>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">{{ __('Date of Birth') }}</label>
-                                            <input type="text" name="date_of_birth" class="form-control datetimepicker" value="{{ old('date_of_birth', $pendingGeneral['date_of_birth'] ?? $employee->date_of_birth) }}" placeholder="{{ __('YYYY-MM-DD') }}">
+                                            <x-date-field name="date_of_birth" :label="__('Date of Birth')"
+                                                          :value="$pendingGeneral['date_of_birth'] ?? $employee->date_of_birth"
+                                                          wrapper-class="" />
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">{{ __('Phone') }}</label>
@@ -220,6 +221,12 @@
 @endsection
 
 @push('scripts')
+{{-- Date markup for the JS-built document rows, rendered by the component so
+     they keep the same picker and calendar as every other field. --}}
+<template id="profile-date-templates">
+    <span data-field="issued_date"><x-date-field name="documents[__INDEX__][issued_date]" value="__VALUE__" :placeholder="__('Issued')" wrapper-class="" /></span>
+    <span data-field="expiry_date"><x-date-field name="documents[__INDEX__][expiry_date]" value="__VALUE__" :placeholder="__('Expiry')" wrapper-class="" /></span>
+</template>
 <script>
 (function () {
     var avatarInput = document.getElementById('profile_avatar_input');
@@ -263,6 +270,24 @@
 
     function boolChecked(v) {
         return (v === true || v === 1 || v === '1') ? 'checked' : '';
+    }
+
+    var dateTemplates = document.getElementById('profile-date-templates');
+
+    /**
+     * A row's date field, stamped from the component-rendered template. The AD
+     * value goes into both inputs; date-field.js rewrites the visible one into
+     * the company's calendar as soon as the field is bound.
+     */
+    function dateFieldHtml(field, index, value) {
+        var node = dateTemplates.content.querySelector('[data-field="' + field + '"]');
+
+        return node.innerHTML
+            .replace(/__INDEX__/g, index)
+            .replace(/__VALUE__/g, escapeHtml(value))
+            // ids are unique per render, so a clone has to be re-uniqued
+            .replace(/id="([^"]+)"/g, 'id="$1-' + index + '"')
+            .replace(/for="([^"]+)"/g, 'for="$1-' + index + '"');
     }
 
     function rowHtml(type, i, row) {
@@ -335,8 +360,8 @@
                     <div class="col-md-3"><input name="documents[${i}][title]" class="form-control" placeholder="{{ __('Title') }}" value="${escapeHtml(row.title)}"></div>
                     <div class="col-md-4"><input name="documents[${i}][file_path]" class="form-control" placeholder="{{ __('File path') }}" value="${escapeHtml(row.file_path)}"></div>
                     <div class="col-md-2"><button type="button" class="btn btn-custom-default btn-sm profile-row-remove" data-remove-row><i class="icon-trash"></i></button></div>
-                    <div class="col-md-2"><input name="documents[${i}][issued_date]" class="form-control datetimepicker" placeholder="{{ __('Issued') }}" value="${escapeHtml(row.issued_date)}"></div>
-                    <div class="col-md-2"><input name="documents[${i}][expiry_date]" class="form-control datetimepicker" placeholder="{{ __('Expiry') }}" value="${escapeHtml(row.expiry_date)}"></div>
+                    <div class="col-md-2">${dateFieldHtml('issued_date', i, row.issued_date)}</div>
+                    <div class="col-md-2">${dateFieldHtml('expiry_date', i, row.expiry_date)}</div>
                 </div>
             </div>`;
         }
@@ -358,7 +383,6 @@
         var rows = Array.isArray(data[ref.key]) ? data[ref.key] : [];
         if (rows.length === 0) {
             ref.container.innerHTML = '';
-            $('.datetimepicker').datepicker({ format: 'yyyy-mm-dd' });
             return;
         }
 
@@ -366,7 +390,7 @@
             return rowHtml(type, i, row);
         }).join('');
 
-        $('.datetimepicker').datepicker({ format: 'yyyy-mm-dd' });
+        window.initDateFields(ref.container);
     }
 
     Object.keys(refs).forEach(render);

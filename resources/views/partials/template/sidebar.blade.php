@@ -36,7 +36,7 @@
                     </a>
                 </li>
 
-                @if(($s['canEmployeeView'] ?? false) || ($s['canEmployeeCreate'] ?? false) || ($s['canEmployeeUpdate'] ?? false) || ($s['canResignationApply'] ?? false) || ($s['canResignationSupervisorApprove'] ?? false) || ($s['canResignationFinalApprove'] ?? false) || ($s['canEmployeeStatusView'] ?? false) || ($s['canDepartmentView'] ?? false) || ($s['canDepartmentCreate'] ?? false) || ($s['canDesignationView'] ?? false) || ($s['canDesignationCreate'] ?? false))
+                @if(($s['canEmployeeView'] ?? false) || ($s['canEmployeeCreate'] ?? false) || ($s['canEmployeeUpdate'] ?? false) || ($s['canEmployeeProfileUpdateSubmit'] ?? false) || ($s['canResignationApply'] ?? false) || ($s['canResignationSupervisorApprove'] ?? false) || ($s['canResignationFinalApprove'] ?? false) || ($s['canEmployeeStatusView'] ?? false) || ($s['canDepartmentView'] ?? false) || ($s['canDepartmentCreate'] ?? false) || ($s['canDesignationView'] ?? false) || ($s['canDesignationCreate'] ?? false))
                     <li id="menu-employees" data-id="menu-employees" class="main {{ ($s['isEmployees'] ?? false) ? 'active' : '' }}">
                         <a class="has-arrow" href="#" aria-expanded="{{ ($s['isEmployees'] ?? false) ? 'true' : 'false' }}">
                             <i class="icon-user"></i>
@@ -51,6 +51,9 @@
                             @endif
                             @if($s['canEmployeeUpdate'] ?? false)
                                 <li class="{{ request()->routeIs('employees.profile-updates.index') || request()->routeIs('employees.profile-updates.show') ? 'active' : '' }}"><a href="{{ route('employees.profile-updates.index') }}">{{ __('Update Approval Queue') }}</a></li>
+                            @endif
+                            @if($s['canEmployeeProfileUpdateSubmit'] ?? false)
+                                <li class="{{ request()->routeIs('employees.profile-updates.create') ? 'active' : '' }}"><a href="{{ route('employees.profile-updates.create') }}">{{ __('Update Profile') }}</a></li>
                             @endif
                             @if($s['canResignationApply'] ?? false)
                                 <li class="{{ request()->routeIs('employee-resignations.index') ? 'active' : '' }}"><a href="{{ route('employee-resignations.index') }}">{{ __('Resignation Apply') }}</a></li>
