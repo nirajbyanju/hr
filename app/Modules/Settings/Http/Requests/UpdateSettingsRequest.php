@@ -42,6 +42,14 @@ class UpdateSettingsRequest extends FormRequest
             'weekend_days' => ['array'],
             'weekend_days.*' => ['string', Rule::in(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'])],
 
+            // Work window used by the Attendance Records grid to derive
+            // late / early / overtime / half-day.
+            'work_start_time' => ['nullable', 'date_format:H:i'],
+            'work_end_time' => ['nullable', 'date_format:H:i'],
+            'standard_work_hours' => ['nullable', 'numeric', 'min:1', 'max:24'],
+            'half_day_hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
+            'late_grace_minutes' => ['nullable', 'integer', 'min:0', 'max:240'],
+
             'mail_mailer' => ['required', 'string', Rule::in(['smtp'])],
             'mail_host' => ['nullable', 'string', 'max:255'],
             'mail_port' => ['nullable', 'integer', 'min:1', 'max:65535'],

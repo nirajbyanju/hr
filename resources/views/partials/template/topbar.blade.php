@@ -5,7 +5,7 @@
 <header class="topbar clearfix">
     @php
         $authUser = auth()->user();
-        $avatarPath = $authUser?->employee?->avatar_path ?: 'assets/img/user/default.jpg';
+        $avatarPath = $authUser?->employee?->avatar_path ?: \App\Support\DefaultAvatar::forGender($authUser?->employee?->gender);
         $notificationPayload = $topbarNotifications ?? ['items' => [], 'count' => 0];
         $notificationItems = collect($notificationPayload['items'] ?? []);
         $notificationCount = (int) ($notificationPayload['count'] ?? $notificationItems->count());

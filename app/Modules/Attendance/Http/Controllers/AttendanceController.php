@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Modules\Attendance\Http\Requests\ImportAttendanceRequest;
 use App\Modules\Attendance\Http\Requests\StoreAttendanceRequest;
 use App\Modules\Attendance\Repositories\AttendanceRepository;
+use App\Modules\Attendance\Services\AttendanceCalendarService;
 use App\Modules\Attendance\Services\AttendanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +24,74 @@ class AttendanceController extends Controller
 {
     public function __construct(
         private readonly AttendanceRepository $attendanceRepository,
-        private readonly AttendanceService $attendanceService
+        private readonly AttendanceService $attendanceService,
+        private readonly AttendanceCalendarService $attendanceCalendarService
     ) {
     }
+
+    /**
+     * Monthly attendance grid: employees down the side, days across the top, a
+     * derived status icon per cell (see AttendanceCalendarService). Paginates
+     * EMPLOYEES, not log rows.
+     */
+    public function records(Request $request): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $hasAllAccess = $this->hasAllAccess($user);
+        $scopedEmployeeIds = $hasAllAccess ? null : $this->scopedEmployeeIds($user);
+
+        $now = now();
+        $filters = [
+            'employee_id' => (int) $request->input('employee_id', 0),
+            'month' => min(12, max(1, (int) $request->input('month', $now->month))),
+            'year' => min(2100, max(2000, (int) $request->input('year', $now->year))),
+            'per_page' => max(5, min(50, (int) $request->input('per_page', 10))),
+        ];
+
+        if ($scopedEmployeeIds !== null && $filters['employee_id'] > 0 && ! in_array($filters['employee_id'], $scopedEmployeeIds, true)) {
+            $filters['employee_id'] = 0;
+        }
+
+        $employeesPage = Employee::query()
+            ->with(['designation:id,name', 'department:id,name', 'user:id,avatar_path'])
+            ->when($scopedEmployeeIds !== null, fn ($q) => $q->whereIn('id', $scopedEmployeeIds))
+            ->when($filters['employee_id'] > 0, fn ($q) => $q->where('id', $filters['employee_id']))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->paginate($filters['per_page'])
+            ->withQueryString();
+
+        $grid = $this->attendanceCalendarService->buildMonthlyGrid(
+            $employeesPage->getCollection(),
+            $filters['year'],
+            $filters['month'],
+        );
+
+        return view('hr.attendance.records', [
+            'grid' => $grid,
+            'employeesPage' => $employeesPage,
+            'employees' => $this->attendanceRepository->listEmployeesForScope($scopedEmployeeIds),
+            'filters' => $filters,
+            'months' => $this->monthOptions(),
+            'years' => range($now->year + 1, $now->year - 5),
+            'canManageAttendance' => $user->hasPermission('attendance.manage'),
+            'canImportAttendance' => $user->hasAnyPermission(['attendance.manage', 'attendance.import']),
+            'canExportAttendance' => $user->hasAnyPermission(['attendance.report', 'attendance.view', 'attendance.manage']),
+        ]);
+    }
+
+    /** @return array<int, string> month number => name */
+    private function monthOptions(): array
+    {
+        $months = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $months[$m] = Carbon::create(null, $m, 1)->format('F');
+        }
+
+        return $months;
+    }
+
     /// Display a listing of attendance logs with filtering and pagination.
 
     public function index(Request $request): View

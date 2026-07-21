@@ -77,7 +77,10 @@ class DateSystem
             config('app.timezone', self::DEFAULT_TIMEZONE)
         );
 
-        return in_array($zone, timezone_identifiers_list(), true) ? $zone : self::DEFAULT_TIMEZONE;
+        // Invalid or unknown zone => UTC (no shift), as the docblock promises.
+        // Falling back to DEFAULT_TIMEZONE would silently shift every timestamp
+        // by +05:45 because someone mistyped a setting.
+        return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'UTC';
     }
 
     /**

@@ -47,13 +47,13 @@
                         <div class="col-md-6">
                             <div class="profile-review-avatar">
                                 <span>{{ __('Current Image') }}</span>
-                                <img src="{{ $requestItem->employee?->avatar_path ? asset($requestItem->employee->avatar_path) : asset('assets/img/user/default.jpg') }}" alt="Current profile image">
+                                <img src="{{ $requestItem->employee?->avatar_path ? asset($requestItem->employee->avatar_path) : asset(\App\Support\DefaultAvatar::forGender($requestItem->employee?->gender)) }}" alt="Current profile image">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="profile-review-avatar">
                                 <span>{{ __('Requested Image') }}</span>
-                                <img src="{{ $requestedAvatarPath ? asset($requestedAvatarPath) : ($requestItem->employee?->avatar_path ? asset($requestItem->employee->avatar_path) : asset('assets/img/user/default.jpg')) }}" alt="Requested profile image">
+                                <img src="{{ $requestedAvatarPath ? asset($requestedAvatarPath) : ($requestItem->employee?->avatar_path ? asset($requestItem->employee->avatar_path) : asset(\App\Support\DefaultAvatar::forGender($requestItem->employee?->gender))) }}" alt="Requested profile image">
                             </div>
                         </div>
                     </div>

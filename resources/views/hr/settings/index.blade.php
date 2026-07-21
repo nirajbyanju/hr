@@ -154,6 +154,32 @@
                         </div>
 
                         <hr>
+                        <h5 class="table_banner_title mb-3">{{ __('Work Hours') }}</h5>
+                        <p class="text-muted mb-3"><small>{{ __('Used by the Attendance Records grid to flag late arrivals, early departures, overtime and half-days.') }}</small></p>
+                        <div class="row">
+                            <div class="col-md-3 form-group">
+                                <label>{{ __('Work start time') }}</label>
+                                <input type="time" class="form-control" name="work_start_time" value="{{ old('work_start_time', $settings['work_start_time'] ?? '09:00') }}">
+                            </div>
+                            <div class="col-md-3 form-group">
+                                <label>{{ __('Work end time') }}</label>
+                                <input type="time" class="form-control" name="work_end_time" value="{{ old('work_end_time', $settings['work_end_time'] ?? '17:00') }}">
+                            </div>
+                            <div class="col-md-2 form-group">
+                                <label>{{ __('Standard hours') }}</label>
+                                <input type="number" step="0.5" min="1" max="24" class="form-control" name="standard_work_hours" value="{{ old('standard_work_hours', $settings['standard_work_hours'] ?? '8') }}">
+                            </div>
+                            <div class="col-md-2 form-group">
+                                <label>{{ __('Half-day under (hrs)') }}</label>
+                                <input type="number" step="0.5" min="0" max="24" class="form-control" name="half_day_hours" value="{{ old('half_day_hours', $settings['half_day_hours'] ?? '4') }}">
+                            </div>
+                            <div class="col-md-2 form-group">
+                                <label>{{ __('Late grace (min)') }}</label>
+                                <input type="number" min="0" max="240" class="form-control" name="late_grace_minutes" value="{{ old('late_grace_minutes', $settings['late_grace_minutes'] ?? '15') }}">
+                            </div>
+                        </div>
+
+                        <hr>
                         <h5 class="table_banner_title mb-3">{{ __('SMTP Configuration') }}</h5>
                         <div class="row">
                             <div class="col-md-4 form-group">

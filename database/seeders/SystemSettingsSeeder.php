@@ -23,6 +23,15 @@ class SystemSettingsSeeder extends Seeder
             'date_system' => ['value' => 'ad', 'group_name' => 'localization'],
             'time_zone' => ['value' => config('app.timezone', 'Asia/Kathmandu'), 'group_name' => 'localization'],
             'weekend_days' => ['value' => 'sat,sun', 'group_name' => 'localization'],
+            // Work window, used by the Attendance Records grid to derive
+            // late / early-departure / overtime / half-day from check-in/out
+            // times. HR can tune these; the grid falls back to the same
+            // defaults when a key is unset.
+            'work_start_time' => ['value' => '09:00', 'group_name' => 'attendance'],
+            'work_end_time' => ['value' => '17:00', 'group_name' => 'attendance'],
+            'standard_work_hours' => ['value' => '8', 'group_name' => 'attendance'],
+            'half_day_hours' => ['value' => '4', 'group_name' => 'attendance'],
+            'late_grace_minutes' => ['value' => '15', 'group_name' => 'attendance'],
             'mail_mailer' => ['value' => config('mail.default', 'smtp'), 'group_name' => 'smtp'],
             'mail_host' => ['value' => config('mail.mailers.smtp.host'), 'group_name' => 'smtp'],
             'mail_port' => ['value' => (string) config('mail.mailers.smtp.port'), 'group_name' => 'smtp'],

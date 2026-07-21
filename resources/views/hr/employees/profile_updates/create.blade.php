@@ -39,7 +39,7 @@
                         @php($selectedMaritalStatus = old('marital_status', $pendingGeneral['marital_status'] ?? $employee->marital_status))
                         @php($managerName = $employee->manager ? trim($employee->manager->first_name.' '.$employee->manager->last_name).' ('.$employee->manager->employee_code.')' : 'No Manager')
                         @php($pendingAvatarPath = $pendingGeneral['avatar_path'] ?? null)
-                        @php($profileImage = $pendingAvatarPath ? asset($pendingAvatarPath) : ($employee->avatar_path ? asset($employee->avatar_path) : asset('assets/img/user/default.jpg')))
+                        @php($profileImage = $pendingAvatarPath ? asset($pendingAvatarPath) : ($employee->avatar_path ? asset($employee->avatar_path) : asset(\App\Support\DefaultAvatar::forGender($employee->gender))))
 
                             <ul class="nav nav-tabs profile-update-tab-nav mb-3" id="profile-update-tabs" role="tablist">
                             <li class="nav-item" role="presentation">

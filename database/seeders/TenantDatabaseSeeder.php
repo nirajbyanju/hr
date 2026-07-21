@@ -18,6 +18,10 @@ class TenantDatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             SystemSettingsSeeder::class,
+            // Office baseline (departments, designations, salary grades) MUST run
+            // before LeavePolicySeeder: leave policies are seeded per salary grade
+            // and that seeder skips everything when no grades exist yet.
+            OfficeBaselineSeeder::class,
             LeavePolicySeeder::class,
             TaskLookupSeeder::class,
             TaskTagSeeder::class,

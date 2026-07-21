@@ -4,7 +4,7 @@
             @php
                 $s = $sidebarState ?? [];
                 $authUser = auth()->user();
-                $avatarPath = $authUser?->employee?->avatar_path ?: 'assets/img/user/default.jpg';
+                $avatarPath = $authUser?->employee?->avatar_path ?: \App\Support\DefaultAvatar::forGender($authUser?->employee?->gender);
             @endphp
             <div class="sidebar-header text-center">
                 <figure class="side-user-bg" style="background-image: url('{{ asset('assets/img/sidebar.jpg') }}');">
@@ -86,6 +86,10 @@
                         <ul aria-expanded="{{ ($s['isAttendance'] ?? false) ? 'true' : 'false' }}">
                             @if(($s['canAttendanceView'] ?? false) || ($s['canAttendanceClock'] ?? false) || ($s['canAttendanceManage'] ?? false))
                                 <li class="{{ request()->routeIs('attendance.index') ? 'active' : '' }}"><a href="{{ route('attendance.index') }}">{{ __('Attendances') }}</a></li>
+                                <li class="{{ request()->routeIs('attendance.records') ? 'active' : '' }}"><a href="{{ route('attendance.records') }}">{{ __('Attendance Records') }}</a></li>
+                                <li class="{{ request()->routeIs('attendance.regularizations.*') ? 'active' : '' }}"><a href="{{ route('attendance.regularizations.index') }}">{{ __('Attendance Regularizations') }}</a></li>
+                                <li class="{{ request()->routeIs('attendance.policies.*') ? 'active' : '' }}"><a href="{{ route('attendance.policies.index') }}">{{ __('Attendance Policies') }}</a></li>
+                                <li class="{{ request()->routeIs('attendance.shifts.*') ? 'active' : '' }}"><a href="{{ route('attendance.shifts.index') }}">{{ __('Shifts') }}</a></li>
                             @endif
                             @if($s['canAttendanceApiIntegration'] ?? false)
                                 <li class="{{ request()->routeIs('attendance.api-docs') ? 'active' : '' }}"><a href="{{ route('attendance.api-docs') }}">{{ __('API Integration') }}</a></li>

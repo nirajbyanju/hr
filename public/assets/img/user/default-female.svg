@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Default profile avatar">
+  <defs>
+    <clipPath id="female-ring"><circle cx="256" cy="256" r="212"/></clipPath>
+  </defs>
+  <circle cx="256" cy="256" r="250" fill="#111111"/>
+  <circle cx="256" cy="256" r="242" fill="#86ccec"/>
+  <circle cx="256" cy="256" r="212" fill="#cfeaf7"/>
+  <g clip-path="url(#female-ring)">
+    <!-- hair falling behind the shoulders -->
+    <path d="M158 160 C 146 300 150 402 176 472 L 214 472 C 182 388 190 306 202 262
+             L 310 262 C 322 306 330 388 298 472 L 336 472 C 362 402 366 300 354 160 Z" fill="#123a55"/>
+    <!-- blazer / shoulders -->
+    <path d="M92 472 C 106 392 176 344 256 344 C 336 344 406 392 420 472 Z" fill="#0e3350"/>
+    <!-- white top -->
+    <path d="M256 344 L288 372 L256 472 L224 372 Z" fill="#ffffff"/>
+    <!-- blazer lapels -->
+    <path d="M256 344 L224 372 L212 472 L256 472 Z" fill="#0b2c44"/>
+    <path d="M256 344 L288 372 L300 472 L256 472 Z" fill="#0b2c44"/>
+    <!-- neck -->
+    <rect x="230" y="298" width="52" height="46" rx="18" fill="#9fd4ef"/>
+    <!-- ears -->
+    <circle cx="186" cy="222" r="15" fill="#b3e0f5"/>
+    <circle cx="326" cy="222" r="15" fill="#b3e0f5"/>
+    <!-- head -->
+    <path d="M188 210 c0 -72 40 -114 68 -114 c28 0 68 42 68 114 c0 62 -32 108 -68 108 c-36 0 -68 -46 -68 -108 Z" fill="#b3e0f5"/>
+    <!-- hair front / fringe framing the face -->
+    <path d="M184 224
+      C 176 128 226 76 256 76
+      C 288 76 330 104 340 158
+      C 346 190 340 224 340 224
+      C 332 200 320 188 320 188
+      C 300 182 280 168 268 150
+      C 258 176 216 200 184 200 Z" fill="#123a55"/>
+  </g>
+</svg>

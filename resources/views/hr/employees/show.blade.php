@@ -18,11 +18,8 @@
                 <div class="content_wrapper content-padded">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <div class="employee-profile-avatar">
-                            @if($employee->avatar_path)
-                                <img src="{{ asset($employee->avatar_path) }}" alt="Employee Avatar">
-                            @else
-                                <i class="icon-user employee-profile-avatar-icon"></i>
-                            @endif
+                            <img src="{{ $employee->avatar_path ? asset($employee->avatar_path) : asset(\App\Support\DefaultAvatar::forGender($employee->gender)) }}" alt="Employee Avatar">
+
                         </div>
                         <h4 class="mb-0">{{ trim($employee->first_name.' '.$employee->last_name) }} <small class="text-muted">({{ $employee->employee_code }})</small></h4>
                     </div>

@@ -65,7 +65,11 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'Asia/Kathmandu'),
+    // The application clock MUST stay UTC. A company's time_zone setting is a
+    // display-only concern, applied through App\Support\DateSystem — never by
+    // moving app.timezone, which would store local time with no offset (see
+    // AppServiceProvider and Tests\Feature\Settings\DateSystemTest).
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

@@ -15,6 +15,9 @@ use App\Modules\Settings\Http\Controllers\SettingsController;
 use App\Modules\Departments\Http\Controllers\DepartmentController;
 use App\Modules\Designations\Http\Controllers\DesignationController;
 use App\Modules\Attendance\Http\Controllers\AttendanceController;
+use App\Modules\Attendance\Http\Controllers\AttendancePolicyController;
+use App\Modules\Attendance\Http\Controllers\AttendanceRegularizationController;
+use App\Modules\Attendance\Http\Controllers\ShiftController;
 use App\Modules\Employees\Http\Controllers\EmployeeController;
 use App\Modules\Employees\Http\Controllers\EmployeeProfileUpdateRequestController;
 use App\Modules\Employees\Http\Controllers\EmployeeResignationController;
@@ -156,7 +159,38 @@ Route::middleware(['auth', 'portal.access'])->group(function (): void {
 
     Route::prefix('attendance')->name('attendance.')->group(function (): void {
         Route::get('/', [AttendanceController::class, 'index'])->middleware('permission:attendance.view,attendance.clock,attendance.manage')->name('index');
+        Route::get('/records', [AttendanceController::class, 'records'])->middleware('permission:attendance.view,attendance.clock,attendance.manage')->name('records');
         Route::post('/', [AttendanceController::class, 'store'])->middleware('permission:attendance.clock,attendance.manage')->name('store');
+
+        // Attendance regularization requests (correct a day's clock in/out).
+        Route::prefix('regularizations')->name('regularizations.')->group(function (): void {
+            Route::get('/', [AttendanceRegularizationController::class, 'index'])->middleware('permission:attendance.view,attendance.clock,attendance.manage,attendance.approve_time_change')->name('index');
+            Route::get('/employee/{employee}/records', [AttendanceRegularizationController::class, 'employeeRecords'])->middleware('permission:attendance.view,attendance.clock,attendance.manage,attendance.approve_time_change')->name('employee-records');
+            Route::post('/', [AttendanceRegularizationController::class, 'store'])->middleware('permission:attendance.clock,attendance.manage,attendance.approve_time_change')->name('store');
+            Route::put('/{regularization}', [AttendanceRegularizationController::class, 'update'])->middleware('permission:attendance.clock,attendance.manage,attendance.approve_time_change')->name('update');
+            Route::post('/{regularization}/approve', [AttendanceRegularizationController::class, 'approve'])->middleware('permission:attendance.approve_time_change,attendance.manage')->name('approve');
+            Route::post('/{regularization}/reject', [AttendanceRegularizationController::class, 'reject'])->middleware('permission:attendance.approve_time_change,attendance.manage')->name('reject');
+            Route::delete('/{regularization}', [AttendanceRegularizationController::class, 'destroy'])->middleware('permission:attendance.clock,attendance.manage,attendance.approve_time_change')->name('destroy');
+        });
+
+        // Attendance policies (grace periods + overtime rate).
+        Route::prefix('policies')->name('policies.')->group(function (): void {
+            Route::get('/', [AttendancePolicyController::class, 'index'])->middleware('permission:attendance.view,attendance.manage')->name('index');
+            Route::post('/', [AttendancePolicyController::class, 'store'])->middleware('permission:attendance.manage')->name('store');
+            Route::put('/{policy}', [AttendancePolicyController::class, 'update'])->middleware('permission:attendance.manage')->name('update');
+            Route::patch('/{policy}/status', [AttendancePolicyController::class, 'toggleStatus'])->middleware('permission:attendance.manage')->name('status');
+            Route::delete('/{policy}', [AttendancePolicyController::class, 'destroy'])->middleware('permission:attendance.manage')->name('destroy');
+        });
+
+        // Work shifts.
+        Route::prefix('shifts')->name('shifts.')->group(function (): void {
+            Route::get('/', [ShiftController::class, 'index'])->middleware('permission:attendance.view,attendance.manage')->name('index');
+            Route::post('/', [ShiftController::class, 'store'])->middleware('permission:attendance.manage')->name('store');
+            Route::put('/{shift}', [ShiftController::class, 'update'])->middleware('permission:attendance.manage')->name('update');
+            Route::patch('/{shift}/status', [ShiftController::class, 'toggleStatus'])->middleware('permission:attendance.manage')->name('status');
+            Route::delete('/{shift}', [ShiftController::class, 'destroy'])->middleware('permission:attendance.manage')->name('destroy');
+        });
+
         Route::get('/export', [AttendanceController::class, 'exportCsv'])->middleware('permission:attendance.report,attendance.view,attendance.manage')->name('export');
         Route::get('/template-download', [AttendanceController::class, 'downloadTemplate'])->middleware('permission:attendance.manage,attendance.import')->name('template-download');
         Route::post('/import', [AttendanceController::class, 'importCsv'])->middleware('permission:attendance.manage,attendance.import')->name('import');

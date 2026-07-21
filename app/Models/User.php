@@ -72,13 +72,16 @@ class User extends Authenticatable
     /**
      * URL of the account avatar, falling back to the shared default image.
      * An employee-linked user shows their employee photo when they have one,
-     * so a single face follows them across the app.
+     * so a single face follows them across the app. When no photo exists the
+     * fallback is chosen by the employee's gender (male when unknown).
      */
     public function avatarUrl(): string
     {
         $path = $this->avatar_path ?: $this->employee?->avatar_path;
 
-        return $path ? asset($path) : asset('assets/img/user/default.jpg');
+        return $path
+            ? asset($path)
+            : asset(\App\Support\DefaultAvatar::forGender($this->employee?->gender));
     }
 
     /** Whether a self-uploaded account avatar is set (ignores the employee photo). */
