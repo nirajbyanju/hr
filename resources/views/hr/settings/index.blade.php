@@ -180,6 +180,98 @@
                         </div>
 
                         <hr>
+                        <h5 class="table_banner_title mb-3">{{ __('Attendance Configuration') }}</h5>
+                        <p class="text-muted mb-3"><small>{{ __('Choose how employees may mark attendance. Only the enabled methods are offered on the Attendance page. At least one method must stay enabled.') }}</small></p>
+                        @php($systemMethodOn = (string) old('attendance_method_system', $settings[\App\Support\AttendanceMethods::SETTING_SYSTEM] ?? '1') !== '0')
+                        @php($qrMethodOn = (string) old('attendance_method_qr', $settings[\App\Support\AttendanceMethods::SETTING_QR] ?? '1') !== '0')
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <div class="form-check">
+                                    <input type="hidden" name="attendance_method_system" value="0">
+                                    <input class="form-check-input" type="checkbox" value="1" id="attendance_method_system"
+                                           name="attendance_method_system" {{ $systemMethodOn ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="attendance_method_system">
+                                        {{ __('System-Based Attendance') }}
+                                    </label>
+                                    <small class="text-muted d-block">{{ __('Employees mark attendance from the Attendance page.') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <div class="form-check">
+                                    <input type="hidden" name="attendance_method_qr" value="0">
+                                    <input class="form-check-input" type="checkbox" value="1" id="attendance_method_qr"
+                                           name="attendance_method_qr" {{ $qrMethodOn ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="attendance_method_qr">
+                                        {{ __('QR Code Attendance') }}
+                                    </label>
+                                    <small class="text-muted d-block">{{ __('Employees mark attendance by scanning their ID card QR code.') }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Restrictions apply to System-Based Attendance only, so the
+                             whole block follows that checkbox. --}}
+                        @php($ipRestrictOn = (string) old('attendance_ip_restriction_enabled', $settings[\App\Support\AttendanceRestrictions::SETTING_IP_ENABLED] ?? '0') === '1')
+                        @php($geoRestrictOn = (string) old('attendance_geofence_enabled', $settings[\App\Support\AttendanceRestrictions::SETTING_GEO_ENABLED] ?? '0') === '1')
+                        <div id="attendance_system_restrictions" class="attendance-restrictions {{ $systemMethodOn ? '' : 'd-none' }}">
+                            <p class="text-muted mb-3"><small>{{ __('Restrict where System-Based Attendance may be marked from. These do not apply to QR Code Attendance, which is recorded on a device the administrator controls.') }}</small></p>
+
+                            <div class="form-check mb-2">
+                                <input type="hidden" name="attendance_ip_restriction_enabled" value="0">
+                                <input class="form-check-input" type="checkbox" value="1" id="attendance_ip_restriction_enabled"
+                                       name="attendance_ip_restriction_enabled" {{ $ipRestrictOn ? 'checked' : '' }}>
+                                <label class="form-check-label" for="attendance_ip_restriction_enabled">
+                                    {{ __('Restrict by IP address') }}
+                                </label>
+                            </div>
+                            <div class="row {{ $ipRestrictOn ? '' : 'd-none' }}" id="attendance_ip_fields">
+                                <div class="col-md-8 form-group">
+                                    <label>{{ __('Allowed IP addresses') }}</label>
+                                    <textarea class="form-control" rows="3" name="attendance_allowed_ips"
+                                              placeholder="203.0.113.10&#10;192.168.1.0/24">{{ old('attendance_allowed_ips', $settings[\App\Support\AttendanceRestrictions::SETTING_ALLOWED_IPS] ?? '') }}</textarea>
+                                    <small class="text-muted">{{ __('One per line or comma separated. Exact addresses (IPv4 or IPv6) or IPv4 CIDR ranges such as 192.168.1.0/24. Leaving this empty allows any address.') }}</small>
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3 mb-2">
+                                <input type="hidden" name="attendance_geofence_enabled" value="0">
+                                <input class="form-check-input" type="checkbox" value="1" id="attendance_geofence_enabled"
+                                       name="attendance_geofence_enabled" {{ $geoRestrictOn ? 'checked' : '' }}>
+                                <label class="form-check-label" for="attendance_geofence_enabled">
+                                    {{ __('Restrict by location (geofence)') }}
+                                </label>
+                            </div>
+                            <div class="row {{ $geoRestrictOn ? '' : 'd-none' }}" id="attendance_geofence_fields">
+                                <div class="col-md-3 form-group">
+                                    <label>{{ __('Latitude') }}</label>
+                                    <input type="number" step="any" min="-90" max="90" class="form-control" name="attendance_geofence_latitude"
+                                           value="{{ old('attendance_geofence_latitude', $settings[\App\Support\AttendanceRestrictions::SETTING_LATITUDE] ?? '') }}"
+                                           placeholder="27.7172">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label>{{ __('Longitude') }}</label>
+                                    <input type="number" step="any" min="-180" max="180" class="form-control" name="attendance_geofence_longitude"
+                                           value="{{ old('attendance_geofence_longitude', $settings[\App\Support\AttendanceRestrictions::SETTING_LONGITUDE] ?? '') }}"
+                                           placeholder="85.3240">
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label>{{ __('Allowed range (metres)') }}</label>
+                                    <input type="number" min="10" max="100000" class="form-control" name="attendance_geofence_radius"
+                                           value="{{ old('attendance_geofence_radius', $settings[\App\Support\AttendanceRestrictions::SETTING_RADIUS] ?? \App\Support\AttendanceRestrictions::DEFAULT_RADIUS_METRES) }}">
+                                    <small class="text-muted">{{ __('Employees may clock in within this distance of the point above.') }}</small>
+                                </div>
+                                <div class="col-md-3 form-group d-flex align-items-end">
+                                    <button type="button" class="btn btn-custom-default w-100" id="attendance_use_my_location">
+                                        <i class="icon-location-pin"></i> {{ __('Use my location') }}
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted" id="attendance_location_status"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
                         <h5 class="table_banner_title mb-3">{{ __('SMTP Configuration') }}</h5>
                         <div class="row">
                             <div class="col-md-4 form-group">
@@ -313,6 +405,46 @@
 
         bindColorField('primary_color_picker', 'primary_color', '--hr-accent');
         bindColorField('secondary_color_picker', 'secondary_color', '--hr-primary');
+
+        // Attendance restrictions: reveal each block only while the thing it
+        // configures is switched on. The fields stay in the form either way, so
+        // an unchecked box still posts its hidden 0 and the server decides.
+        function bindReveal(checkboxId, targetId) {
+            var checkbox = document.getElementById(checkboxId);
+            var target = document.getElementById(targetId);
+            if (!checkbox || !target) {
+                return;
+            }
+
+            function sync() {
+                target.classList.toggle('d-none', !checkbox.checked);
+            }
+
+            checkbox.addEventListener('change', sync);
+            sync();
+        }
+
+        bindReveal('attendance_method_system', 'attendance_system_restrictions');
+        bindReveal('attendance_ip_restriction_enabled', 'attendance_ip_fields');
+        bindReveal('attendance_geofence_enabled', 'attendance_geofence_fields');
+
+        var locateButton = document.getElementById('attendance_use_my_location');
+        var locateStatus = document.getElementById('attendance_location_status');
+        if (locateButton && navigator.geolocation) {
+            locateButton.addEventListener('click', function () {
+                locateStatus.textContent = @json(__('Finding your location…'));
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    document.querySelector('[name="attendance_geofence_latitude"]').value = position.coords.latitude.toFixed(6);
+                    document.querySelector('[name="attendance_geofence_longitude"]').value = position.coords.longitude.toFixed(6);
+                    locateStatus.textContent = @json(__('Filled in from your current position. Accuracy: ')) + Math.round(position.coords.accuracy) + 'm';
+                }, function (error) {
+                    locateStatus.textContent = @json(__('Could not read your location: ')) + error.message;
+                }, {enableHighAccuracy: true, timeout: 10000});
+            });
+        } else if (locateButton) {
+            locateButton.disabled = true;
+            locateStatus.textContent = @json(__('This browser cannot provide a location.'));
+        }
     })();
 </script>
 @endpush

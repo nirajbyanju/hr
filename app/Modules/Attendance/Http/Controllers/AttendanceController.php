@@ -11,6 +11,8 @@ use App\Modules\Attendance\Http\Requests\StoreAttendanceRequest;
 use App\Modules\Attendance\Repositories\AttendanceRepository;
 use App\Modules\Attendance\Services\AttendanceCalendarService;
 use App\Modules\Attendance\Services\AttendanceService;
+use App\Support\AttendanceMethods;
+use App\Support\AttendanceRestrictions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -54,7 +56,15 @@ class AttendanceController extends Controller
         }
 
         $employeesPage = Employee::query()
-            ->with(['designation:id,name', 'department:id,name', 'user:id,avatar_path'])
+            ->with([
+                'designation:id,name',
+                'department:id,name',
+                'user:id,avatar_path',
+                // Each employee's own schedule drives their late / early /
+                // overtime flags; see AttendanceCalendarService::workWindowFor().
+                'shift:id,start_time,end_time,break_duration_minutes,grace_period_minutes,is_night_shift',
+                'attendancePolicy:id,late_arrival_grace_minutes,early_departure_grace_minutes',
+            ])
             ->when($scopedEmployeeIds !== null, fn ($q) => $q->whereIn('id', $scopedEmployeeIds))
             ->when($filters['employee_id'] > 0, fn ($q) => $q->where('id', $filters['employee_id']))
             ->orderBy('first_name')
@@ -128,6 +138,11 @@ class AttendanceController extends Controller
             'currentEmployeeId' => $currentEmployeeId,
             'nextEntryType' => $nextEntryType,
             'hasAllAccess' => $hasAllAccess,
+            // Administrators are exempt from the restrictions (see
+            // attendanceRestrictionError), so their form does not ask the
+            // browser for a position it will never be checked against.
+            'attendanceGeofenceRequired' => AttendanceRestrictions::geofenceEnabled()
+                && ! $user->hasPermission('attendance.manage'),
         ]);
     }
 
@@ -153,6 +168,10 @@ class AttendanceController extends Controller
             return back()->withErrors(['employee_id' => 'No employee profile is linked to your account.'])->withInput();
         }
 
+        if (($restrictionError = $this->attendanceRestrictionError($request, $user)) !== null) {
+            return back()->withErrors($restrictionError)->withInput();
+        }
+
         // Admins with attendance.manage may pick the entry type explicitly (for corrections).
         // Self-service employees never choose it: the server determines the next action from
         // the day's existing entries, which also prevents tampering with the submitted value.
@@ -170,6 +189,55 @@ class AttendanceController extends Controller
             : __('Check-in recorded successfully.');
 
         return redirect()->route('attendance.index')->with('success', $message);
+    }
+
+    /**
+     * Applies the administrator's System-Based Attendance restrictions (IP
+     * allowlist and/or geofence) to a self-service punch.
+     *
+     * Holders of attendance.manage are exempt: they record and correct entries
+     * on behalf of other people, frequently from outside the office, and
+     * blocking that would leave nobody able to fix a record remotely. The
+     * restrictions exist to vouch for where an employee was when they clocked
+     * themselves in, which is not what an administrator's entry claims.
+     *
+     * @return array<string, string>|null
+     */
+    private function attendanceRestrictionError(Request $request, User $user): ?array
+    {
+        if ($user->hasPermission('attendance.manage')) {
+            return null;
+        }
+
+        if (! AttendanceMethods::systemEnabled()) {
+            return ['entry_type' => __('System-Based Attendance is currently disabled.')];
+        }
+
+        if (! AttendanceRestrictions::ipAllowed($request->ip())) {
+            return ['entry_type' => __('Attendance can only be marked from an approved network. Your address (:ip) is not allowed.', [
+                'ip' => (string) $request->ip(),
+            ])];
+        }
+
+        if (AttendanceRestrictions::geofenceEnabled()) {
+            $latitude = is_numeric($request->input('client_latitude')) ? (float) $request->input('client_latitude') : null;
+            $longitude = is_numeric($request->input('client_longitude')) ? (float) $request->input('client_longitude') : null;
+
+            if ($latitude === null || $longitude === null) {
+                return ['entry_type' => __('Attendance is restricted by location. Allow location access in your browser and try again.')];
+            }
+
+            if (! AttendanceRestrictions::withinGeofence($latitude, $longitude)) {
+                $distance = AttendanceRestrictions::distanceFromSite($latitude, $longitude);
+
+                return ['entry_type' => __('You are outside the allowed attendance area (:distance m away, limit :limit m).', [
+                    'distance' => number_format((float) $distance),
+                    'limit' => number_format(AttendanceRestrictions::radiusMetres()),
+                ])];
+            }
+        }
+
+        return null;
     }
 
     // Export attendance logs as a CSV file based on filters and user access scope.

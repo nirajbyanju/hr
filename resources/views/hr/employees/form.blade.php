@@ -158,6 +158,33 @@
                                 </select>
                             </div>
 
+                            <div class="col-md-4 form-group mb-3">
+                                <label>{{ __('Work Shift') }}</label>
+                                <select name="shift_id" class="form-control">
+                                    <option value="">{{ __('Company default hours') }}</option>
+                                    @php($selectedShift = old('shift_id', $employee->shift_id ?? null))
+                                    @foreach($shifts as $shift)
+                                        <option value="{{ $shift->id }}" {{ (string)$selectedShift === (string)$shift->id ? 'selected' : '' }}>
+                                            {{ $shift->name }} ({{ \Illuminate\Support\Carbon::parse($shift->start_time)->format('H:i') }}–{{ \Illuminate\Support\Carbon::parse($shift->end_time)->format('H:i') }}){{ $shift->is_night_shift ? ' · '.__('Night') : '' }}{{ $shift->status !== 'active' ? ' · '.__('Inactive') : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">{{ __('Decides when this employee counts as late, early or working overtime.') }}</small>
+                            </div>
+                            <div class="col-md-4 form-group mb-3">
+                                <label>{{ __('Attendance Policy') }}</label>
+                                <select name="attendance_policy_id" class="form-control">
+                                    <option value="">{{ __('Company default policy') }}</option>
+                                    @php($selectedPolicy = old('attendance_policy_id', $employee->attendance_policy_id ?? null))
+                                    @foreach($attendancePolicies as $policy)
+                                        <option value="{{ $policy->id }}" {{ (string)$selectedPolicy === (string)$policy->id ? 'selected' : '' }}>
+                                            {{ $policy->name }} ({{ __('grace') }} {{ $policy->late_arrival_grace_minutes }}{{ __('m') }}){{ $policy->status !== 'active' ? ' · '.__('Inactive') : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">{{ __('Grace periods and overtime rate applied to this employee.') }}</small>
+                            </div>
+
                                     <div class="col-md-6 form-group mb-3">
                                         <label>{{ __('Reports To') }}</label>
                                         <select name="reports_to_id" class="form-control">

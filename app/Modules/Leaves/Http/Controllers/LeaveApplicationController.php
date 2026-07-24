@@ -9,6 +9,7 @@ use App\Models\LeaveCategory;
 use App\Models\User;
 use App\Modules\Leaves\Http\Requests\ProcessLeaveApplicationRequest;
 use App\Modules\Leaves\Http\Requests\StoreLeaveApplicationRequest;
+use App\Support\LeaveCategoryColor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -39,14 +40,98 @@ class LeaveApplicationController extends Controller
                 ->get()
             : collect();
 
-        return view('hr.leaves.applications.index', [
+        // The colour map is built from every category, not just the active ones,
+        // so deactivating a category never re-colours the others.
+        $allCategories = LeaveCategory::query()->orderBy('id')->get(['id']);
+
+        return view('hr.leaves.applications.index', array_merge([
             'leaveCategories' => LeaveCategory::query()->where('is_active', true)->orderBy('name')->get(),
             'applications' => $applications,
             'employee' => $employee,
             'balances' => $balances,
             'hasManager' => (bool) ($employee?->reports_to_id),
             'isAdminApplicant' => $user->hasRole('admin'),
-        ]);
+            'categoryColors' => LeaveCategoryColor::map($allCategories),
+            'canExport' => $user->hasAnyPermission(['leave.report', 'leave.approve', 'leave.view']),
+        ], $this->leaveCalendar($request)));
+    }
+
+    /**
+     * Builds the month grid behind the leave calendar: the visible employees (one
+     * row each) and the leave that overlaps the month, already bucketed per
+     * employee so the view does no querying.
+     *
+     * @return array<string, mixed>
+     */
+    private function leaveCalendar(Request $request): array
+    {
+        $user = $request->user();
+
+        // Who this user may see on the calendar. Same tiers used by the approvals
+        // and report screens: HR/admin see everyone, a supervisor sees their own
+        // line, and everybody else sees only themselves.
+        if ($this->hasAllAccess($user)) {
+            $scopeIds = null;
+        } elseif ($user->hasPermission('leave.approve')) {
+            $scopeIds = $this->scopedOwnAndSubordinateIds($user);
+        } else {
+            $employeeId = (int) ($user->employee?->id ?? 0);
+            $scopeIds = $employeeId > 0 ? [$employeeId] : [];
+        }
+
+        $monthInput = (string) $request->input('month', '');
+        try {
+            $cursor = $monthInput !== ''
+                ? Carbon::createFromFormat('Y-m', $monthInput)->startOfMonth()
+                : now()->startOfMonth();
+        } catch (\Throwable) {
+            $cursor = now()->startOfMonth();
+        }
+
+        $monthStart = $cursor->copy()->startOfMonth();
+        $monthEnd = $cursor->copy()->endOfMonth();
+
+        $selectedEmployeeId = (int) $request->input('calendar_employee_id', 0);
+        if ($scopeIds !== null && $selectedEmployeeId > 0 && ! in_array($selectedEmployeeId, $scopeIds, true)) {
+            $selectedEmployeeId = 0;
+        }
+
+        $employees = \App\Models\Employee::query()
+            ->select(['id', 'employee_code', 'first_name', 'last_name', 'designation_id', 'avatar_path', 'gender'])
+            ->with('designation:id,name')
+            ->when($scopeIds !== null, fn ($q) => $q->whereIn('id', $scopeIds))
+            ->when($selectedEmployeeId > 0, fn ($q) => $q->where('id', $selectedEmployeeId))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        // Anything that touches the month, including leave that starts before it
+        // or ends after it — those bars get clipped to the month edges in the view.
+        $leaves = $employees->isEmpty() ? collect() : LeaveApplication::query()
+            ->with('leaveCategory:id,name,code,is_paid')
+            ->whereIn('employee_id', $employees->pluck('id'))
+            ->whereIn('status', ['pending', 'supervisor_approved', 'approved'])
+            ->whereDate('start_date', '<=', $monthEnd->format('Y-m-d'))
+            ->whereDate('end_date', '>=', $monthStart->format('Y-m-d'))
+            ->orderBy('start_date')
+            ->get()
+            ->groupBy('employee_id');
+
+        $days = [];
+        for ($day = $monthStart->copy(); $day->lte($monthEnd); $day->addDay()) {
+            $days[] = $day->copy();
+        }
+
+        return [
+            'calendarEmployees' => $employees,
+            'calendarLeaves' => $leaves,
+            'calendarDays' => $days,
+            'calendarMonth' => $monthStart,
+            'calendarPrevMonth' => $monthStart->copy()->subMonth()->format('Y-m'),
+            'calendarNextMonth' => $monthStart->copy()->addMonth()->format('Y-m'),
+            'calendarFilterEmployees' => $this->filterableEmployees($scopeIds),
+            'calendarSelectedEmployeeId' => $selectedEmployeeId,
+        ];
     }
     // The store method handles the submission of a new leave application. It validates the request, checks for various business rules such as overlapping leaves, leave balance, and category constraints, and then creates a new LeaveApplication record if all checks pass. If any validation or business rule fails, it redirects back with appropriate error messages.
     public function store(StoreLeaveApplicationRequest $request): RedirectResponse

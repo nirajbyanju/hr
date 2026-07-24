@@ -3,6 +3,8 @@
 namespace App\Modules\Settings\Services;
 
 use App\Modules\Settings\Repositories\SettingsRepository;
+use App\Support\AttendanceMethods;
+use App\Support\AttendanceRestrictions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -33,6 +35,42 @@ class SettingsService
         try {
             DB::transaction(function () use ($validated, $newLogoPath, $newFaviconPath): void {
                 $this->settingsRepository->upsertMany($this->settingMeta(), $validated);
+
+                // Only touched when the payload actually carries them. The
+                // settings form always submits both (a hidden 0 behind each
+                // checkbox); a save that covers some other section must leave
+                // the administrator's choice of attendance methods alone.
+                foreach ([
+                    AttendanceMethods::SETTING_SYSTEM,
+                    AttendanceMethods::SETTING_QR,
+                    AttendanceRestrictions::SETTING_IP_ENABLED,
+                    AttendanceRestrictions::SETTING_GEO_ENABLED,
+                ] as $flagKey) {
+                    if (array_key_exists($flagKey, $validated)) {
+                        $this->settingsRepository->put(
+                            $flagKey,
+                            empty($validated[$flagKey]) ? '0' : '1',
+                            ['group_name' => 'attendance']
+                        );
+                    }
+                }
+
+                // Values behind those flags. Written only when present, for the
+                // same reason as the flags themselves.
+                foreach ([
+                    AttendanceRestrictions::SETTING_ALLOWED_IPS => 'text',
+                    AttendanceRestrictions::SETTING_LATITUDE => 'string',
+                    AttendanceRestrictions::SETTING_LONGITUDE => 'string',
+                    AttendanceRestrictions::SETTING_RADIUS => 'string',
+                ] as $valueKey => $type) {
+                    if (array_key_exists($valueKey, $validated)) {
+                        $this->settingsRepository->put(
+                            $valueKey,
+                            $validated[$valueKey],
+                            ['group_name' => 'attendance', 'type' => $type]
+                        );
+                    }
+                }
 
                 if (! empty($validated['mail_password'])) {
                     $this->settingsRepository->put('mail_password', $validated['mail_password'], [
@@ -103,6 +141,9 @@ class SettingsService
             'standard_work_hours' => ['group_name' => 'attendance'],
             'half_day_hours' => ['group_name' => 'attendance'],
             'late_grace_minutes' => ['group_name' => 'attendance'],
+            // The attendance method flags are written separately (conditionally) —
+            // see updateSettings(). upsertMany() writes every key listed here, so
+            // listing them would let a save that does not carry them null both out.
             'mail_mailer' => ['group_name' => 'smtp'],
             'mail_host' => ['group_name' => 'smtp'],
             'mail_port' => ['group_name' => 'smtp'],

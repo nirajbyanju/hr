@@ -34,6 +34,24 @@
                         <div class="col-md-4"><strong>{{ __('Manager:') }}</strong> {{ $employee->manager ? trim($employee->manager->first_name.' '.$employee->manager->last_name) : '-' }}</div>
                     </div>
                     <div class="row mt-2">
+                        <div class="col-md-4">
+                            <strong>{{ __('Work Shift:') }}</strong>
+                            @if($employee->shift)
+                                {{ $employee->shift->name }} ({{ $employee->shift->hoursLabel() }})
+                            @else
+                                <span class="text-muted">{{ __('Company default hours') }}</span>
+                            @endif
+                        </div>
+                        <div class="col-md-4">
+                            <strong>{{ __('Attendance Policy:') }}</strong>
+                            @if($employee->attendancePolicy)
+                                {{ $employee->attendancePolicy->name }}
+                            @else
+                                <span class="text-muted">{{ __('Company default policy') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="row mt-2">
                         <div class="col-md-4"><strong>{{ __('Phone:') }}</strong> {{ $employee->phone ?: '-' }}</div>
                         <div class="col-md-4"><strong>{{ __('Work Email:') }}</strong> {{ $employee->work_email ?: '-' }}</div>
                         <div class="col-md-4"><strong>{{ __('Linked User:') }}</strong> {{ $employee->user?->email ?? '-' }}</div>

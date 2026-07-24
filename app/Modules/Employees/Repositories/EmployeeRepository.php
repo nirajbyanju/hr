@@ -104,6 +104,8 @@ class EmployeeRepository
             'department:id,name,code',
             'designation:id,name,code',
             'salaryGrade:id,grade_name,grade_code,band_name,min_salary,max_salary',
+            'shift:id,name,start_time,end_time,break_duration_minutes',
+            'attendancePolicy:id,name',
             'manager:id,employee_code,first_name,last_name',
             'subordinates:id,employee_code,first_name,last_name,reports_to_id',
             'user:id,name,email',
@@ -156,6 +158,33 @@ class EmployeeRepository
     public function listSalaryGrades(): Collection
     {
         return SalaryGrade::query()->where('is_active', true)->orderBy('grade_name')->get(['id', 'grade_name', 'grade_code', 'band_name']);
+    }
+
+    /**
+     * Assignable shifts. An inactive shift already on the employee is kept in
+     * the list so editing them does not silently drop the assignment.
+     *
+     * @return Collection<int, \App\Models\Shift>
+     */
+    public function listShifts(?int $includeId = null): Collection
+    {
+        return \App\Models\Shift::query()
+            ->where(fn ($query) => $query->where('status', 'active')
+                ->when($includeId, fn ($inner) => $inner->orWhere('id', $includeId)))
+            ->orderBy('name')
+            ->get(['id', 'name', 'start_time', 'end_time', 'is_night_shift', 'status']);
+    }
+
+    /**
+     * @return Collection<int, \App\Models\AttendancePolicy>
+     */
+    public function listAttendancePolicies(?int $includeId = null): Collection
+    {
+        return \App\Models\AttendancePolicy::query()
+            ->where(fn ($query) => $query->where('status', 'active')
+                ->when($includeId, fn ($inner) => $inner->orWhere('id', $includeId)))
+            ->orderBy('name')
+            ->get(['id', 'name', 'late_arrival_grace_minutes', 'early_departure_grace_minutes', 'overtime_rate_per_hour', 'status']);
     }
 
     /**
@@ -226,6 +255,8 @@ class EmployeeRepository
                 'designation_id',
                 'reports_to_id',
                 'employment_status',
+                'avatar_path',
+                'gender',
             ]);
     }
 

@@ -44,6 +44,10 @@ class StoreEmployeeRequest extends FormRequest
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
             'designation_id' => ['nullable', 'integer', 'exists:designations,id'],
             'salary_grade_id' => ['nullable', 'integer', 'exists:salary_grades,id'],
+            // Drive this employee's attendance off their own schedule; left
+            // blank they fall back to the company-wide work window in Settings.
+            'shift_id' => ['nullable', 'integer', 'exists:shifts,id'],
+            'attendance_policy_id' => ['nullable', 'integer', 'exists:attendance_policies,id'],
             'reports_to_id' => ['nullable', 'integer', 'exists:employees,id'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

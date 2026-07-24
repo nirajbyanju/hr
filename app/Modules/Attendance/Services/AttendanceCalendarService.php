@@ -47,7 +47,7 @@ class AttendanceCalendarService
         $today = CarbonImmutable::today();
         $daysInMonth = $start->daysInMonth;
 
-        $window = $this->workWindow();
+        $companyWindow = $this->workWindow();
         $weekendIndexes = $this->weekendDayIndexes();
         $employeeIds = $employees->pluck('id')->all();
 
@@ -76,6 +76,10 @@ class AttendanceCalendarService
             $left = $employee->termination_date
                 ? CarbonImmutable::parse($employee->termination_date)->startOfDay()
                 : null;
+
+            // An employee on their own shift / policy is measured against it;
+            // everyone else against the company-wide window from Settings.
+            $window = $this->workWindowFor($employee, $companyWindow);
 
             $cells = [];
             $presentDays = 0.0;
@@ -124,7 +128,7 @@ class AttendanceCalendarService
      * Resolve a single day's cell and, for present/half days, add to the running
      * present-day total (full = 1, half = 0.5).
      *
-     * @param  array<string, array{start:int,end:int,standard:int,half:int,grace:int}>  $window
+     * @param  array{start:int,end:int,standard:int,half:int,grace:int,early_grace:int,night:bool}  $window
      */
     private function cellFor(
         int $employeeId,
@@ -183,7 +187,12 @@ class AttendanceCalendarService
             if ($firstIn !== null && $this->minutesOfDay($firstIn) > $window['start'] + $window['grace']) {
                 $subs[] = 'late';
             }
-            if ($lastOut !== null && $this->minutesOfDay($lastOut) < $window['end']) {
+            // A night shift ends on the following calendar day, so comparing a
+            // clock-out's minute-of-day against the shift end would mark every
+            // one of them early. Those are judged on hours worked instead.
+            if (! $window['night']
+                && $lastOut !== null
+                && $this->minutesOfDay($lastOut) < $window['end'] - $window['early_grace']) {
                 $subs[] = 'early';
             }
             if ($worked > $window['standard']) {
@@ -364,7 +373,7 @@ class AttendanceCalendarService
         return $time->hour * 60 + $time->minute;
     }
 
-    /** @return array{start:int,end:int,standard:int,half:int,grace:int} minutes */
+    /** @return array{start:int,end:int,standard:int,half:int,grace:int,early_grace:int,night:bool} minutes */
     private function workWindow(): array
     {
         return [
@@ -373,7 +382,48 @@ class AttendanceCalendarService
             'standard' => (int) round(((float) SystemSetting::getValue('standard_work_hours', 8)) * 60),
             'half' => (int) round(((float) SystemSetting::getValue('half_day_hours', 4)) * 60),
             'grace' => (int) SystemSetting::getValue('late_grace_minutes', 15),
+            'early_grace' => 0,
+            'night' => false,
         ];
+    }
+
+    /**
+     * The company window, overridden by whatever the employee has been assigned.
+     *
+     * Shift decides the hours (when the day starts and ends, and how long a full
+     * day is); policy decides the tolerances (how late is late, how early is
+     * early). Either may be absent, and each falls back independently — an
+     * employee can be on a night shift under the default grace, or on the
+     * standard hours under a stricter policy.
+     *
+     * @param  array{start:int,end:int,standard:int,half:int,grace:int,early_grace:int,night:bool}  $companyWindow
+     * @return array{start:int,end:int,standard:int,half:int,grace:int,early_grace:int,night:bool}
+     */
+    private function workWindowFor(\App\Models\Employee $employee, array $companyWindow): array
+    {
+        $window = $companyWindow;
+        $shift = $employee->shift;
+
+        if ($shift !== null) {
+            $window['start'] = $this->timeToMinutes((string) $shift->start_time);
+            $window['end'] = $this->timeToMinutes((string) $shift->end_time);
+            $window['standard'] = (int) round($shift->workingHours() * 60);
+            $window['night'] = (bool) $shift->is_night_shift || $window['end'] <= $window['start'];
+
+            // The shift's own grace applies unless a policy overrides it below.
+            if ((int) $shift->grace_period_minutes > 0) {
+                $window['grace'] = (int) $shift->grace_period_minutes;
+            }
+        }
+
+        $policy = $employee->attendancePolicy;
+
+        if ($policy !== null) {
+            $window['grace'] = (int) $policy->late_arrival_grace_minutes;
+            $window['early_grace'] = (int) $policy->early_departure_grace_minutes;
+        }
+
+        return $window;
     }
 
     private function timeToMinutes(string $time): int

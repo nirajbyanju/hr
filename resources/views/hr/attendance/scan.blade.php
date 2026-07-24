@@ -11,6 +11,8 @@
 
     <div class="page-content">
         <div class="container-fluid">
+            @include('hr.attendance.partials.method-nav')
+
             <div id="scan-result" class="scan-result mb-3" style="display:none;"></div>
 
             <div class="row g-4">

@@ -49,6 +49,8 @@ class EmployeeController extends Controller
              'salaryGrades' => $this->employeeRepository->listSalaryGrades(),
             'managers' => $this->employeeRepository->listManagers(),
             'users' => $this->employeeRepository->listUsersForLinking(),
+            'shifts' => $this->employeeRepository->listShifts(),
+            'attendancePolicies' => $this->employeeRepository->listAttendancePolicies(),
         ]);
     }
 
@@ -107,6 +109,8 @@ class EmployeeController extends Controller
             'salaryGrades' => $this->employeeRepository->listSalaryGrades(),
             'managers' => $this->employeeRepository->listManagers($employee->id),
             'users' => $this->employeeRepository->listUsersForLinking($employee->user_id),
+            'shifts' => $this->employeeRepository->listShifts($employee->shift_id),
+            'attendancePolicies' => $this->employeeRepository->listAttendancePolicies($employee->attendance_policy_id),
         ]);
     }
 

@@ -26,7 +26,9 @@ class EmployeeService
         try {
             return DB::transaction(function () use ($payload, $newAvatarPath): Employee {
                 $attributes = $this->mapPayloadToAttributes($payload);
-                $attributes['employee_code'] = $payload['employee_code'] ?: $this->generateEmployeeCode();
+                // Validated as nullable, so the key may be absent entirely — not
+                // just empty — when the caller omits the field.
+                $attributes['employee_code'] = ($payload['employee_code'] ?? null) ?: $this->generateEmployeeCode();
                 $attributes['avatar_path'] = $newAvatarPath;
 
                 return $this->employeeRepository->create($attributes);
@@ -116,6 +118,8 @@ class EmployeeService
             'department_id' => $payload['department_id'] ?? null,
             'designation_id' => $payload['designation_id'] ?? null,
             'salary_grade_id' => $payload['salary_grade_id'] ?? null,
+            'shift_id' => $payload['shift_id'] ?? null,
+            'attendance_policy_id' => $payload['attendance_policy_id'] ?? null,
             'reports_to_id' => $payload['reports_to_id'] ?? null,
             'notes' => $payload['notes'] ?? null,
         ];

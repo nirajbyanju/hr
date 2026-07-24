@@ -41,6 +41,16 @@ class Employee extends Model
         return $this->belongsTo(SalaryGrade::class);
     }
 
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
+    }
+
+    public function attendancePolicy(): BelongsTo
+    {
+        return $this->belongsTo(AttendancePolicy::class);
+    }
+
     public function manager(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'reports_to_id');

@@ -22,6 +22,8 @@
 
     <div class="page-content">
         <div class="container-fluid">
+            @include('hr.attendance.partials.method-nav')
+
             <div class=" mb-3" id="attendance-entry-form">
                 <div class="content_wrapper content-padded">
                     <h5 class="table_banner_title mb-3">{{ __('Manual Attendance Entry') }}</h5>
@@ -84,15 +86,28 @@
                                 <label>{{ __('Remarks') }}</label>
                                 <input type="text" name="remarks" class="form-control" value="{{ old('remarks') }}" placeholder="{{ __('Optional') }}">
                             </div>
+                        @if($attendanceGeofenceRequired)
+                            {{-- Filled in from the browser just before submitting; the server
+                                 re-checks the distance and rejects the punch if it is missing
+                                 or outside the allowed range. --}}
+                            <input type="hidden" name="client_latitude" id="client_latitude" value="">
+                            <input type="hidden" name="client_longitude" id="client_longitude" value="">
+                        @endif
                         <div class="col-md-12 mt-2">
                             @if($canManageAttendance)
                                 <button type="submit" class="btn btn-custom"><i class="icon-plus"></i> {{ __('Add Attendance') }}</button>
                             @else
-                                <button type="submit" class="btn btn-custom">
+                                <button type="submit" class="btn btn-custom" id="attendance_submit">
                                     <i class="icon-clock"></i>
                                     {{ ($nextEntryType ?? 'checkin') === 'checkout' ? __('Check Out Now') : __('Check In Now') }}
                                 </button>
                                 <small class="text-muted d-block mt-1">{{ __('The system records your next check-in or check-out automatically.') }}</small>
+                                @if($attendanceGeofenceRequired)
+                                    <small class="text-muted d-block mt-1" id="attendance_geo_status">
+                                        <i class="icon-location-pin"></i>
+                                        {{ __('Attendance is restricted to the workplace — your location is checked when you submit.') }}
+                                    </small>
+                                @endif
                             @endif
                             </div>
                     </form>
@@ -232,6 +247,59 @@
                 }
             });
         }
+
+        @if($attendanceGeofenceRequired)
+        // The geofence is on, so hold the submit until the browser has given us
+        // a position to send. The server verifies the distance either way — this
+        // only saves the employee a round trip that would certainly be rejected.
+        var geoForm = document.querySelector('#attendance-entry-form form');
+        var latField = document.getElementById('client_latitude');
+        var lngField = document.getElementById('client_longitude');
+        var geoStatus = document.getElementById('attendance_geo_status');
+        var geoSubmit = document.getElementById('attendance_submit');
+        var positionReady = false;
+
+        if (geoForm && latField && lngField) {
+            geoForm.addEventListener('submit', function (event) {
+                if (positionReady) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (!navigator.geolocation) {
+                    if (geoStatus) {
+                        geoStatus.textContent = @json(__('This browser cannot provide a location, so attendance cannot be marked here.'));
+                    }
+                    return;
+                }
+
+                if (geoSubmit) {
+                    geoSubmit.disabled = true;
+                }
+                if (geoStatus) {
+                    geoStatus.textContent = @json(__('Checking your location…'));
+                }
+
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    latField.value = position.coords.latitude;
+                    lngField.value = position.coords.longitude;
+                    positionReady = true;
+                    if (geoSubmit) {
+                        geoSubmit.disabled = false;
+                    }
+                    geoForm.submit();
+                }, function (error) {
+                    if (geoSubmit) {
+                        geoSubmit.disabled = false;
+                    }
+                    if (geoStatus) {
+                        geoStatus.textContent = @json(__('Could not read your location: ')) + error.message;
+                    }
+                }, {enableHighAccuracy: true, timeout: 10000, maximumAge: 0});
+            });
+        }
+        @endif
     })();
 </script>
 @endpush
